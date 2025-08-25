@@ -1,36 +1,577 @@
 <!DOCTYPE html>
-Sistema de Gestión Integral de Legajos
-Sistema de Gestión Integral de Legajos
-Legajos
-Monitor de Beneficios
-  <button id="btnNuevaSentencia" class="btn-primary">+ Ingresar Nueva Sentencia</button>
-  <input id="buscarLegajo" placeholder="Buscar por prontuario o nombre" />
-</div>
-<table id="tablaLegajos" class="table"></table>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GestiÃ³n Integral de Legajos â€“ JEP2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --light-bg-general: #e5e7eb;
+      --light-bg-content: #ffffff;
+      --light-bg-column: #f9fafb;
+      --light-text-main: #111827;
+    }
+    html, body { height: 100%; }
+    body { font-family: 'Inter', sans-serif; background: var(--light-bg-general); color: var(--light-text-main); }
+    .relief-border { border: 1px solid #fff; box-shadow: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); }
+    .relief-button { box-shadow: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); transition: all .2s; }
+    .relief-button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); }
+    .tab-btn { cursor:pointer; padding:.5rem 1rem; border-bottom:2px solid transparent; }
+    .tab-btn.active { border-color:#4f46e5; color:#4f46e5; font-weight:600; }
+    .hidden { display:none; }
+  </style>
+</head>
+<body class="text-gray-800">
+  <header class="w-full bg-white p-3 flex items-center justify-between relief-border">
+    <div class="flex items-center gap-3">
+      <h1 class="text-xl md:text-2xl font-bold">Juzgado de EjecuciÃ³n Penal NÂ° 2</h1>
+      <span class="text-sm text-gray-500">GestiÃ³n Integral de Legajos</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <button id="navLegajos" class="relief-button px-4 py-2 rounded-xl bg-white">Legajos</button>
+      <button id="navBeneficios" class="relief-button px-4 py-2 rounded-xl bg-white">Monitor de Beneficios</button>
+      <button id="navTramites" class="relief-button px-4 py-2 rounded-xl bg-white">TrÃ¡mites Varios</button>
+    </div>
+  </header>
 
-Monitor de Beneficios
-<header class="flex justify-between">
-  <h3 id="legajoTitulo">Legajo</h3>
-  <button onclick="cerrarLegajo()">×</button>
-</header>
-<nav class="tabs">
-  <button data-tab="caratula">Carátula</button>
-  <button data-tab="sentencias">Sentencias y Cómputo</button>
-  <button data-tab="beneficios">Beneficios</button>
-  <button data-tab="tramites">Trámites Varios</button>
-</nav>
-<section id="tab-caratula" class="tab"></section>
-<section id="tab-sentencias" class="tab hidden"></section>
-<section id="tab-beneficios" class="tab hidden"></section>
-<section id="tab-tramites" class="tab hidden"></section>
-<header class="flex justify-between">
-  <h3>Nuevo Beneficio</h3>
-  <button onclick="cerrarCaseModal()">×</button>
-</header>
-<form id="formBeneficio">
-  <input type="hidden" name="id_legajo">
-  <label>Interno: <input type="text" name="interno"></label>
-  <label>Expediente: <input type="text" name="expediente"></label>
-  <label>Beneficio: <input type="text" name="beneficio"></label>
-  <button type="submit" class="btn-primary">Guardar</button>
-</form>
+  <main class="container mx-auto p-4 md:p-6">
+    <!-- LEGAJOS -->
+    <section id="viewLegajos" class="hidden">
+      <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-3">
+        <input id="searchLegajos" type="text" placeholder="Buscar por prontuario o nombre..." class="w-full md:w-96 px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 relief-border" />
+        <div class="flex items-center gap-2">
+          <button id="btnNewLegajo" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl hover:bg-indigo-700 relief-button">+ Nuevo Legajo</button>
+          <button id="btnNewSentencia" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-xl hover:bg-blue-700 relief-button">+ Ingresar Nueva Sentencia</button>
+        </div>
+      </div>
+      <div class="bg-white p-4 rounded-xl relief-border">
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm" id="tblLegajos">
+            <thead>
+              <tr class="text-left text-gray-500 border-b">
+                <th class="py-2 pr-3">#</th>
+                <th class="py-2 pr-3">Prontuario</th>
+                <th class="py-2 pr-3">Nombre</th>
+                <th class="py-2 pr-3">Defensor</th>
+                <th class="py-2 pr-3">Fiscal</th>
+                <th class="py-2 pr-3">Estado CÃ³mputo</th>
+                <th class="py-2 pr-3">Fin Condena</th>
+                <th class="py-2 pr-3">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="bodyLegajos"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- BENEFICIOS (Kanban placeholder: se integra con tu cÃ³digo base) -->
+    <section id="viewBeneficios" class="hidden">
+      <div class="flex justify-between items-center mb-4">
+        <input id="searchBeneficios" type="text" placeholder="Buscar NÂ° o Interno..." class="w-full md:w-80 px-4 py-2 border rounded-xl relief-border" />
+        <button id="addCaseBtn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl hover:bg-indigo-700 relief-button">+ Nuevo TrÃ¡mite</button>
+      </div>
+      <div id="kanban-board" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6"></div>
+    </section>
+
+    <!-- TRÃMITES VARIOS -->
+    <section id="viewTramites" class="hidden">
+      <div class="flex justify-between items-center mb-4">
+        <input id="searchTramites" type="text" placeholder="Buscar por tipo o descripciÃ³n..." class="w-full md:w-96 px-4 py-2 border rounded-xl relief-border" />
+        <button id="btnNuevoTramite" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl hover:bg-indigo-700 relief-button">+ Nuevo TrÃ¡mite</button>
+      </div>
+      <div class="bg-white p-4 rounded-xl relief-border">
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm" id="tblTramites">
+            <thead>
+              <tr class="text-left text-gray-500 border-b">
+                <th class="py-2 pr-3">#</th>
+                <th class="py-2 pr-3">Legajo</th>
+                <th class="py-2 pr-3">Tipo</th>
+                <th class="py-2 pr-3">Fecha Solicitud</th>
+                <th class="py-2 pr-3">Estado</th>
+                <th class="py-2 pr-3">DescripciÃ³n</th>
+                <th class="py-2 pr-3">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="bodyTramites"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL LEGAJO -->
+  <div id="legajoModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-40">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-5xl relief-border">
+      <div class="flex justify-between items-center mb-4">
+        <h2 id="legajoModalTitle" class="text-2xl font-bold">Legajo</h2>
+        <button id="closeLegajoModal" class="text-gray-500 hover:text-gray-700">âœ•</button>
+      </div>
+      <div class="flex gap-2 border-b mb-4">
+        <button class="tab-btn active" data-tab="tabCaratula">CarÃ¡tula</button>
+        <button class="tab-btn" data-tab="tabSentencias">Sentencias y CÃ³mputo</button>
+        <button class="tab-btn" data-tab="tabBeneficios">Beneficios</button>
+        <button class="tab-btn" data-tab="tabTramites">TrÃ¡mites Varios</button>
+      </div>
+
+      <div id="tabCaratula" class="tab-pane">
+        <form id="formCaratula" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input type="hidden" id="car_id_legajo" />
+          <div><label class="text-sm">NÂ° Prontuario</label><input id="car_prontuario" class="w-full px-3 py-2 border rounded-xl"></div>
+          <div><label class="text-sm">Nombre Completo</label><input id="car_nombre" class="w-full px-3 py-2 border rounded-xl"></div>
+          <div><label class="text-sm">Defensor Actual</label><input id="car_defensor" class="w-full px-3 py-2 border rounded-xl"></div>
+          <div><label class="text-sm">Fiscal Actual</label><input id="car_fiscal" class="w-full px-3 py-2 border rounded-xl"></div>
+          <div><label class="text-sm">Estado CÃ³mputo</label>
+            <select id="car_estado_computo" class="w-full px-3 py-2 border rounded-xl">
+              <option>Pendiente SPP</option><option>En FiscalÃ­a</option><option>En DefensorÃ­a</option><option>Aprobado</option>
+            </select>
+          </div>
+          <div><label class="text-sm">Fecha Fin de Condena</label><input type="date" id="car_fin_condena" class="w-full px-3 py-2 border rounded-xl"></div>
+          <div class="md:col-span-2"><label class="text-sm">Enlace CÃ³mputo</label><input id="car_link_computo" class="w-full px-3 py-2 border rounded-xl" placeholder="https://drive.google.com/..."></div>
+          <div class="md:col-span-2 flex justify-end gap-2 mt-2">
+            <button type="button" id="btnGuardarCaratula" class="bg-indigo-600 text-white px-4 py-2 rounded-xl relief-button">Guardar</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="tabSentencias" class="tab-pane hidden">
+        <div class="flex justify-end mb-3">
+          <button id="btnNuevaSentenciaModal" class="bg-blue-600 text-white px-4 py-2 rounded-xl relief-button">+ Nueva Sentencia</button>
+        </div>
+        <div class="bg-white p-3 rounded-xl relief-border">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="text-left text-gray-500 border-b">
+                <th class="py-2 pr-3">Causa</th>
+                <th class="py-2 pr-3">Delito</th>
+                <th class="py-2 pr-3">Pena</th>
+                <th class="py-2 pr-3">Fecha</th>
+                <th class="py-2 pr-3">Unificada</th>
+                <th class="py-2 pr-3">Documento</th>
+                <th class="py-2 pr-3">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="bodySentencias"></tbody>
+          </table>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="bg-white p-3 rounded-xl relief-border">
+            <h3 class="font-semibold mb-2">Estado del CÃ³mputo</h3>
+            <div class="flex gap-2 flex-wrap">
+              <button class="px-3 py-1 rounded-xl relief-button bg-gray-200" data-computo="Pendiente SPP">SPP</button>
+              <button class="px-3 py-1 rounded-xl relief-button bg-gray-200" data-computo="En FiscalÃ­a">Enviar a FiscalÃ­a</button>
+              <button class="px-3 py-1 rounded-xl relief-button bg-gray-200" data-computo="En DefensorÃ­a">Enviar a DefensorÃ­a</button>
+              <button class="px-3 py-1 rounded-xl relief-button bg-green-200" data-computo="Aprobado">Aprobar</button>
+            </div>
+          </div>
+          <div class="bg-white p-3 rounded-xl relief-border">
+            <h3 class="font-semibold mb-2">Notas / Observaciones</h3>
+            <textarea id="computoNotas" rows="4" class="w-full px-3 py-2 border rounded-xl"></textarea>
+            <div class="flex justify-end mt-2"><button id="btnGuardarNotasComputo" class="px-3 py-1 rounded-xl relief-button bg-indigo-600 text-white">Guardar</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tabBeneficios" class="tab-pane hidden">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="font-semibold">Beneficios del Interno</h3>
+          <button id="btnNuevoBeneficioDesdeLegajo" class="bg-indigo-600 text-white px-4 py-2 rounded-xl relief-button">+ Nuevo Beneficio</button>
+        </div>
+        <div class="bg-white p-3 rounded-xl relief-border">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="text-left text-gray-500 border-b">
+                <th class="py-2 pr-3">Expediente</th>
+                <th class="py-2 pr-3">Beneficio</th>
+                <th class="py-2 pr-3">Estado</th>
+                <th class="py-2 pr-3">Ingreso</th>
+                <th class="py-2 pr-3">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="bodyBeneficiosLegajo"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="tabTramites" class="tab-pane hidden">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="font-semibold">TrÃ¡mites Varios</h3>
+          <button id="btnNuevoTramiteDesdeLegajo" class="bg-indigo-600 text-white px-4 py-2 rounded-xl relief-button">+ Nuevo TrÃ¡mite</button>
+        </div>
+        <div class="bg-white p-3 rounded-xl relief-border">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="text-left text-gray-500 border-b">
+                <th class="py-2 pr-3">Tipo</th>
+                <th class="py-2 pr-3">Fecha</th>
+                <th class="py-2 pr-3">Estado</th>
+                <th class="py-2 pr-3">DescripciÃ³n</th>
+                <th class="py-2 pr-3">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="bodyTramitesLegajo"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Nuevo/Editar Beneficio (reutilizable) -->
+  <div id="caseModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-30">
+    <div class="bg-white rounded-xl p-8 w-full max-w-md relief-border">
+      <h2 id="modalTitle" class="text-2xl font-bold mb-4">Agregar Nuevo TrÃ¡mite</h2>
+      <form id="caseForm">
+        <input type="hidden" id="caseId" />
+        <input type="hidden" id="case_id_legajo" />
+        <div class="mb-4"><label class="block text-sm font-medium">NÂ° de Expediente</label><input type="text" id="expediente" class="mt-1 w-full px-3 py-2 border rounded-xl" required></div>
+        <div class="mb-4"><label class="block text-sm font-medium">Nombre del Interno/a</label><input type="text" id="interno" class="mt-1 w-full px-3 py-2 border rounded-xl" required></div>
+        <div class="mb-4"><label class="block text-sm font-medium">Fecha de Ingreso</label><input type="date" id="fechaIngreso" class="mt-1 w-full px-3 py-2 border rounded-xl" required></div>
+        <div class="mb-6"><label class="block text-sm font-medium">Tipo de Beneficio</label><select id="beneficio" class="mt-1 w-full px-3 py-2 border rounded-xl"><option>Salidas Transitorias</option><option>PrisiÃ³n Domiciliaria</option><option>EstÃ­mulo Educativo</option><option>Libertad Asistida</option><option>Libertad Condicional</option><option>RÃ©gimen Preparatorio</option><option>Otro</option></select></div>
+        <div class="flex justify-end gap-2"><button type="button" id="cancelBtn" class="bg-gray-200 px-4 py-2 rounded-xl relief-button">Cancelar</button><button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-xl relief-button">Guardar</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Script de aplicaciÃ³n -->
+  <script>
+    // ====== CONFIG ======
+    const API_URL = 'TU_URL_WEBAPP';
+    const TOKEN   = 'TU_TOKEN_API';
+
+    // ====== NAV ======
+    const viewLegajos   = document.getElementById('viewLegajos');
+    const viewBeneficios= document.getElementById('viewBeneficios');
+    const viewTramites  = document.getElementById('viewTramites');
+    const navLegajos = document.getElementById('navLegajos');
+    const navBeneficios = document.getElementById('navBeneficios');
+    const navTramites = document.getElementById('navTramites');
+
+    function showView(id){
+      [viewLegajos,viewBeneficios,viewTramites].forEach(v => v.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+    }
+    navLegajos.onclick = ()=>{ showView('viewLegajos'); loadLegajos(); };
+    navBeneficios.onclick = ()=>{ showView('viewBeneficios'); loadKanban(); };
+    navTramites.onclick = ()=>{ showView('viewTramites'); loadTramites(); };
+
+    // Default: abrir Legajos
+    showView('viewLegajos');
+
+    // ====== API helpers ======
+    async function apiGet(params){
+      const url = new URL(API_URL);
+      Object.entries({ token:TOKEN, ...params }).forEach(([k,v])=>url.searchParams.set(k,v));
+      const res = await fetch(url.toString());
+      const j = await res.json();
+      if(j.ok===false) throw new Error(j.error||'Error API');
+      return j;
+    }
+    async function apiPost(action, payload){
+      const res = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token:TOKEN, action, ...payload }) });
+      const j = await res.json();
+      if(j.ok===false) throw new Error(j.error||'Error API');
+      return j;
+    }
+
+    // ====== Legajos ======
+    async function loadLegajos(){
+      const data = await apiGet({ action:'getLegajos' });
+      const body = document.getElementById('bodyLegajos');
+      body.innerHTML = '';
+      data.forEach((r,i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = \`
+          <td class="py-1 pr-3">\${i+1}</td>
+          <td class="py-1 pr-3">\${r.nro_prontuario||''}</td>
+          <td class="py-1 pr-3">\${r.nombre_completo||''}</td>
+          <td class="py-1 pr-3">\${r.defensor_actual||''}</td>
+          <td class="py-1 pr-3">\${r.fiscal_actual||''}</td>
+          <td class="py-1 pr-3">\${r.estado_computo||''}</td>
+          <td class="py-1 pr-3">\${r.fecha_fin_condena||''}</td>
+          <td class="py-1 pr-3"><button class="px-3 py-1 rounded-xl relief-button bg-gray-100" data-open="\${r.id_legajo}">Abrir</button></td>
+        \`;
+        body.appendChild(tr);
+      });
+      body.querySelectorAll('[data-open]').forEach(btn=>btn.onclick=()=>openLegajo(btn.getAttribute('data-open')));
+    }
+
+    // ====== Modal Legajo ======
+    const legajoModal = document.getElementById('legajoModal');
+    const closeLegajoModal = document.getElementById('closeLegajoModal');
+    closeLegajoModal.onclick = ()=> legajoModal.classList.add('hidden');
+    document.querySelectorAll('.tab-btn').forEach(b=>b.onclick = (ev)=>{
+      document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(el=>el.classList.add('hidden'));
+      const tab = ev.currentTarget.dataset.tab;
+      ev.currentTarget.classList.add('active');
+      document.getElementById(tab).classList.remove('hidden');
+    });
+
+    let currentLegajo = null;
+    async function openLegajo(id_legajo){
+      const data = await apiGet({ action:'getLegajoDetail', id_legajo });
+      currentLegajo = data.legajo;
+      document.getElementById('legajoModalTitle').textContent = \`\${data.legajo.nombre_completo} â€“ \${data.legajo.nro_prontuario}\`;
+      // CarÃ¡tula
+      document.getElementById('car_id_legajo').value = data.legajo.id_legajo;
+      document.getElementById('car_prontuario').value = data.legajo.nro_prontuario||'';
+      document.getElementById('car_nombre').value = data.legajo.nombre_completo||'';
+      document.getElementById('car_defensor').value = data.legajo.defensor_actual||'';
+      document.getElementById('car_fiscal').value = data.legajo.fiscal_actual||'';
+      document.getElementById('car_estado_computo').value = data.legajo.estado_computo||'Pendiente SPP';
+      document.getElementById('car_fin_condena').value = data.legajo.fecha_fin_condena||'';
+      document.getElementById('car_link_computo').value = data.legajo.link_computo||'';
+
+      // Sentencias
+      const bodyS = document.getElementById('bodySentencias');
+      bodyS.innerHTML = (data.sentencias||[]).map(s=>\`
+        <tr>
+          <td class="py-1 pr-3">\${s.nro_causa||''}</td>
+          <td class="py-1 pr-3">\${s.delito||''}</td>
+          <td class="py-1 pr-3">\${s.pena_impuesta||''}</td>
+          <td class="py-1 pr-3">\${s.fecha_sentencia||''}</td>
+          <td class="py-1 pr-3">\${s.es_unificada||''}</td>
+          <td class="py-1 pr-3"><a class="text-indigo-600" href="\${s.enlace_sentencia||'#'}" target="_blank">ver</a></td>
+          <td class="py-1 pr-3"></td>
+        </tr>\`).join('');
+
+      // Beneficios del legajo
+      const bodyB = document.getElementById('bodyBeneficiosLegajo');
+      bodyB.innerHTML = (data.beneficios||[]).map(b=>\`
+        <tr>
+          <td class="py-1 pr-3">\${b.expediente||''}</td>
+          <td class="py-1 pr-3">\${b.beneficio||''}</td>
+          <td class="py-1 pr-3">\${b.estado||''}</td>
+          <td class="py-1 pr-3">\${b.fechaIngreso||''}</td>
+          <td class="py-1 pr-3"></td>
+        </tr>\`).join('');
+
+      // TrÃ¡mites varios del legajo
+      const bodyT = document.getElementById('bodyTramitesLegajo');
+      bodyT.innerHTML = (data.tramites||[]).map(t=>\`
+        <tr>
+          <td class="py-1 pr-3">\${t.tipo_tramite||''}</td>
+          <td class="py-1 pr-3">\${t.fecha_solicitud||''}</td>
+          <td class="py-1 pr-3">\${t.estado||''}</td>
+          <td class="py-1 pr-3">\${t.descripcion||''}</td>
+          <td class="py-1 pr-3"></td>
+        </tr>\`).join('');
+
+      legajoModal.classList.remove('hidden');
+    }
+
+    document.getElementById('btnGuardarCaratula').onclick = async ()=>{
+      const patch = {
+        nro_prontuario: document.getElementById('car_prontuario').value,
+        nombre_completo: document.getElementById('car_nombre').value,
+        defensor_actual: document.getElementById('car_defensor').value,
+        fiscal_actual: document.getElementById('car_fiscal').value,
+        estado_computo: document.getElementById('car_estado_computo').value,
+        fecha_fin_condena: document.getElementById('car_fin_condena').value,
+        link_computo: document.getElementById('car_link_computo').value,
+      };
+      await apiPost('updateLegajo', { id_legajo: currentLegajo.id_legajo, patch });
+      alert('Guardado');
+    };
+
+    // ====== Kanban (placeholder: integra tu cÃ³digo existente) ======
+    async function loadKanban(){
+      // Si ya tenÃ©s render del Kanban en tu cÃ³digo base, aquÃ­ solo se llama a getCases.
+      const data = await apiGet({ action:'getCases' }); // endpoint compatible
+      const board = document.getElementById('kanban-board');
+      board.innerHTML = '<div class="text-gray-500">Kanban cargado. Integra aquÃ­ tu renderer existente con data.</div>';
+      console.log('Beneficios:', data);
+    }
+
+    // ====== TrÃ¡mites Varios ======
+    async function loadTramites(){
+      const data = await apiGet({ action:'getTramites' });
+      const body = document.getElementById('bodyTramites');
+      body.innerHTML = '';
+      data.forEach((t,i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = \`
+          <td class="py-1 pr-3">\${i+1}</td>
+          <td class="py-1 pr-3">\${t.id_legajo||''}</td>
+          <td class="py-1 pr-3">\${t.tipo_tramite||''}</td>
+          <td class="py-1 pr-3">\${t.fecha_solicitud||''}</td>
+          <td class="py-1 pr-3">\${t.estado||''}</td>
+          <td class="py-1 pr-3">\${t.descripcion||''}</td>
+          <td class="py-1 pr-3"></td>
+        \`;
+        body.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>
+
+
+2) Apps Script (Code.gs) 
+/**
+ * GESTION INTEGRAL JEP2 - Google Apps Script
+ * WebApp: doGet / doPost
+ * Hoja: Legajos, Sentencias, Beneficios, TramitesVarios, (opcional) Logs
+ */
+
+const SHEET = {
+  LEGAJOS: 'Legajos',
+  SENTENCIAS: 'Sentencias',
+  BENEFICIOS: 'Beneficios',
+  TRAMITES: 'TramitesVarios',
+  LOGS: 'Logs'
+};
+
+function _auth(e) {
+  const props = PropertiesService.getScriptProperties();
+  const token = props.getProperty('TOKEN_API');
+  const t = (e.parameter && e.parameter.token) || (e.postData && JSON.parse(e.postData.contents).token);
+  if (!token || !t || t !== token) throw new Error('Auth failed');
+}
+
+function _json(o, code) {
+  return ContentService.createTextOutput(JSON.stringify(o))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function _sheet(name){ return SpreadsheetApp.getActive().getSheetByName(name); }
+function _getAll(sheetName){
+  const sh = _sheet(sheetName);
+  const [head, ...rows] = sh.getDataRange().getValues();
+  return rows.filter(r=>r.join('')!=='').map(r=>Object.fromEntries(head.map((h,i)=>[String(h).trim(), r[i]])));
+}
+function _append(sheetName, obj){
+  const sh = _sheet(sheetName);
+  const head = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
+  const row = head.map(h=> (obj[h]!==undefined?obj[h]:''));
+  sh.appendRow(row);
+  return obj;
+}
+function _updateById(sheetName, idField, idValue, patch){
+  const sh = _sheet(sheetName);
+  const [head, ...rows] = sh.getDataRange().getValues();
+  const col = head.indexOf(idField);
+  if (col < 0) throw new Error('idField not found');
+  for (let i=0;i<rows.length;i++){
+    if (String(rows[i][col]) === String(idValue)){
+      head.forEach((h,idx)=>{
+        if (patch[h]!==undefined) rows[i][idx] = patch[h];
+      });
+      sh.getRange(2,1,rows.length,head.length).setValues(rows);
+      return Object.fromEntries(head.map((h,idx)=>[h, rows[i][idx]]));
+    }
+  }
+  throw new Error('Row not found');
+}
+
+function doGet(e){
+  try {
+    _auth(e);
+    const action = e.parameter.action;
+    if (action === 'getLegajos') return _json(getLegajos());
+    if (action === 'getLegajoDetail') return _json(getLegajoDetail(e.parameter.id_legajo));
+    if (action === 'getCases') return _json(getCases());
+    if (action === 'getTramites') return _json(getTramites());
+    return _json({ ok:false, error:'Unknown action' });
+  } catch(err){
+    return _json({ ok:false, error: String(err) });
+  }
+}
+
+function doPost(e){
+  try {
+    _auth(e);
+    const body = JSON.parse(e.postData.contents || '{}');
+    const action = body.action;
+    if (action === 'addLegajo') return _json(addLegajo(body));
+    if (action === 'updateLegajo') return _json(updateLegajo(body.id_legajo, body.patch));
+    if (action === 'addSentencia') return _json(addSentencia(body));
+    if (action === 'updateComputoEstado') return _json(updateComputoEstado(body));
+    if (action === 'addCase') return _json(addCase(body));
+    if (action === 'addTramiteVario') return _json(addTramiteVario(body));
+    return _json({ ok:false, error:'Unknown action' });
+  } catch(err){
+    return _json({ ok:false, error: String(err) });
+  }
+}
+
+/** ====== LEGAJOS ====== */
+function getLegajos(){
+  const data = _getAll(SHEET.LEGAJOS);
+  return data;
+}
+
+function getLegajoDetail(id_legajo){
+  const legajos = _getAll(SHEET.LEGAJOS);
+  const legajo = legajos.find(l => String(l.id_legajo) === String(id_legajo));
+  const sentencias = _getAll(SHEET.SENTENCIAS).filter(s => String(s.id_legajo) === String(id_legajo));
+  const beneficios = _getAll(SHEET.BENEFICIOS).filter(b => String(b.id_legajo) === String(id_legajo));
+  const tramites = _getAll(SHEET.TRAMITES).filter(t => String(t.id_legajo) === String(id_legajo));
+  return { legajo, sentencias, beneficios, tramites };
+}
+
+function addLegajo({ id_legajo, nro_prontuario, nombre_completo, defensor_actual, fiscal_actual, estado_computo, fecha_fin_condena, link_computo }){
+  if (!id_legajo) id_legajo = String(Date.now());
+  const row = { id_legajo, nro_prontuario, nombre_completo, defensor_actual, fiscal_actual, estado_computo, fecha_fin_condena, link_computo };
+  _append(SHEET.LEGAJOS, row);
+  return { ok:true, id_legajo };
+}
+
+function updateLegajo(id_legajo, patch){
+  const r = _updateById(SHEET.LEGAJOS, 'id_legajo', id_legajo, patch||{});
+  return { ok:true, legajo:r };
+}
+
+/** ====== SENTENCIAS ====== */
+function addSentencia({ id_sentencia, id_legajo, nro_causa, delito, pena_impuesta, fecha_sentencia, es_unificada, enlace_sentencia }){
+  if (!id_legajo) throw new Error('id_legajo requerido');
+  if (!id_sentencia) id_sentencia = 'S' + Date.now();
+  const row = { id_sentencia, id_legajo, nro_causa, delito, pena_impuesta, fecha_sentencia, es_unificada, enlace_sentencia };
+  _append(SHEET.SENTENCIAS, row);
+  return { ok:true, id_sentencia };
+}
+
+/** ====== COMPUTO ====== */
+function updateComputoEstado({ id_legajo, nuevo_estado, fechaClave, link_computo, fecha_fin_condena }){
+  if (!id_legajo) throw new Error('id_legajo requerido');
+  const patch = { estado_computo: nuevo_estado };
+  if (link_computo) patch.link_computo = link_computo;
+  if (fecha_fin_condena) patch.fecha_fin_condena = fecha_fin_condena;
+  const r = _updateById(SHEET.LEGAJOS, 'id_legajo', id_legajo, patch);
+  if (SHEET.LOGS && _sheet(SHEET.LOGS)) {
+    _append(SHEET.LOGS, {
+      id: 'L'+Date.now(), tipo: 'computo', accion: nuevo_estado, usuario:'webapp',
+      timestamp: new Date(), payload_json: JSON.stringify({ id_legajo, fechaClave, link_computo, fecha_fin_condena })
+    });
+  }
+  return { ok:true, legajo:r };
+}
+
+/** ====== BENEFICIOS (KANBAN) ====== */
+function getCases(){
+  return _getAll(SHEET.BENEFICIOS);
+}
+
+function addCase({ id_beneficio_legajo, id_legajo, expediente, interno, beneficio, fechaIngreso }){
+  if (!id_beneficio_legajo) id_beneficio_legajo = 'B' + Date.now();
+  const row = { id_beneficio_legajo, id_legajo, expediente, interno, beneficio, fechaIngreso, estado:'Ingresado' };
+  _append(SHEET.BENEFICIOS, row);
+  return { ok:true, id_beneficio_legajo };
+}
+
+/** ====== TRÃMITES VARIOS ====== */
+function getTramites(){
+  return _getAll(SHEET.TRAMITES);
+}
+
+function addTramiteVario({ id_tramite, id_legajo, tipo_tramite, fecha_solicitud, estado, descripcion, enlace_doc }){
+  if (!id_legajo) throw new Error('id_legajo requerido');
+  if (!id_tramite) id_tramite = 'T' + Date.now();
+  const row = { id_tramite, id_legajo, tipo_tramite, fecha_solicitud: fecha_solicitud||Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'), estado: estado||'Pendiente', descripcion, enlace_doc };
+  _append(SHEET.TRAMITES, row);
+  return { ok:true, id_tramite };
+}
