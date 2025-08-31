@@ -188,16 +188,25 @@
       }
     }
 
-    async function postData(payload){
-      if(!isAuthenticated){ alert('Debes iniciar sesión para realizar cambios'); return; }
-      try{
-        const options = { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({...payload, password: PASSWORD}) };
-        // Si tu WebApp requiere no-cors, cambia mode. Ideal publicar WebApp con acceso público y no usar no-cors.
-        const res = await fetch(googleWebAppUrl, options);
-        // doPost en Apps Script debe devolver JSON. Re-fetch para sincronizar.
-        await fetchData();
-      }catch(err){ console.error('Err post',err); alert('Error al enviar datos'); }
-    }
+   async function postData(payload){
+  if(!isAuthenticated){ 
+    alert('Debes iniciar sesión para realizar cambios'); 
+    return; 
+  }
+  try{
+    const res = await fetch(googleWebAppUrl, { 
+      method:'POST', 
+      headers:{'Content-Type':'application/x-www-form-urlencoded'}, 
+      body: "data=" + encodeURIComponent(JSON.stringify({...payload, password: PASSWORD})) 
+    });
+    const json = await res.json();
+    console.log("Respuesta WebApp:", json);
+    await fetchData();
+  }catch(err){ 
+    console.error('Err post',err); 
+    alert('Error al enviar datos'); 
+  }
+}
 
     function renderLegajosTable(legajos){
       legajosTableBody.innerHTML='';
@@ -339,3 +348,4 @@
   </footer>
 </body>
 </html>
+
