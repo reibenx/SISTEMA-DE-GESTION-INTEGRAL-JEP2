@@ -481,10 +481,20 @@
 
     // ===== Inicio =====
     applyThemeFromStorage();
-    fetchData();
+   async function fetchData(){
+  try {
+    const res = await fetch(googleWebAppUrl);
+    allData = await res.json();
+    console.log("📥 Datos recibidos:", allData); // <-- debug
+    renderLegajosTable(allData.legajos || []);
+  } catch(e) {
+    console.error("❌ Error al obtener datos:", e);
+  }
+};
   </script>
 </body>
 </html>
+
 
 
 
