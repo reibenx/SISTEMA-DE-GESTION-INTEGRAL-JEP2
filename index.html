@@ -34,7 +34,7 @@
 
     /* Modal base */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.40);display:none;align-items:center;justify-content:center;z-index:50}
-    .modal-backdrop.show{display:flex}           /* <-- FIX principal */
+    .modal-backdrop.show{display:flex}
     .modal{background:white;border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.18)}
 
     /* Dark mode */
@@ -45,17 +45,16 @@
     .dark table{color:#e5e7eb}
     .dark thead{color:#e5e7eb}
     .dark .btn-secondary{background:#111827;color:#e5e7eb;border:1px solid #1f2937}
-    .dark input, .dark select, .dark textarea{
-      background:#0f172a;color:#e5e7eb;border-color:#334155
-    }
-    .dark .text-gray-500, .dark .text-gray-600{ color:#cbd5e1 !important } /* Mejora contraste en oscuro */
+    .dark input, .dark select, .dark textarea{ background:#0f172a;color:#e5e7eb;border-color:#334155 }
+    .dark .text-gray-500, .dark .text-gray-600{ color:#cbd5e1 !important }
 
     /* Timeline */
     .timeline{display:flex;align-items:center;gap:14px}
     .tl-step{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:90px;text-align:center}
-    .tl-dot{width:14px;height:14px;border-radius:9999px;background:#cfd4dc;transition:background .3s}
-    .tl-dot.active{background:var(--color-accent)}
-    .tl-line{flex:1;height:3px;background:#cfd4dc;transition:background .3s}
+    .tl-dot{width:14px;height:14px;border-radius:9999px;background:#cfd4dc;transition:all .25s}
+    .tl-dot.completed{background:var(--color-accent)}
+    .tl-dot.current{background:#fff;border:3px solid var(--color-accent)}
+    .tl-line{flex:1;height:3px;background:#cfd4dc;transition:background .25s}
     .tl-line.active{background:var(--color-accent)}
 
     /* Toast simple */
@@ -237,6 +236,7 @@
     let allData = { legajos: [], sentencias: [], beneficios: [], tramitesVarios: [] };
     let isAuthenticated = false;
     let currentLegajoId = null;
+    let isDetailModalOpen = false;
 
     const $ = sel => document.querySelector(sel);
     const $$ = sel => document.querySelectorAll(sel);
@@ -267,7 +267,7 @@
     });
 
     $('#settingsBtn').onclick = ()=>{
-      $('#settingsModal').classList.add('show');  // <-- ahora se muestra
+      $('#settingsModal').classList.add('show');
       $('#colorPrimary').value = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#1e3a8a';
       $('#colorAccent').value  = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() || '#2563eb';
       $('#darkToggle').checked = $('#body').classList.contains('dark');
@@ -318,7 +318,7 @@
         $('#addSentenceBtn').classList.add('hidden');
         showToast('Sesión finalizada');
       } else {
-        loginModal.classList.add('show');  // <-- ahora se muestra
+        loginModal.classList.add('show');
       }
     };
     $('#cancelLoginBtn').onclick = ()=> loginModal.classList.remove('show');
@@ -339,36 +339,23 @@
      * DATA (GET / POST)
      **********************/
     async function fetchData(){
-      try{
-        const res = await fetch(googleWebAppUrl);
-        allData = await res.json();
-        console.log("📥 Datos recibidos:", allData);
-
-        // Pequeña verificación
-        ['legajos','sentencias','beneficios','tramitesVarios'].forEach(k=>{
-          if(!allData.hasOwnProperty(k)) console.warn(`⚠️ Falta clave '${k}' en el JSON del WebApp`);
-        });
-
-        renderLegajosTable(allData.legajos || []);
-      }catch(e){
-        console.error('Error al obtener datos', e);
-        alert('No se pudieron obtener datos del servidor.');
-      }
+      const res = await fetch(googleWebAppUrl);
+      allData = await res.json();
+      console.log("📥 Datos recibidos:", allData);
+      renderLegajosTable(allData.legajos || []);
     }
 
-    async function postData(payload){
+    // Nuevo: control fino del refresco y del modal para evitar reaperturas
+    async function postData(payload, {refreshData=true, refreshModal=false} = {}){
       if(!isAuthenticated){ alert('Debes iniciar sesión'); return; }
-      try{
-        await fetch(googleWebAppUrl,{
-          method:'POST',
-          headers:{'Content-Type':'application/x-www-form-urlencoded'},
-          body:'data='+encodeURIComponent(JSON.stringify({...payload,password:PASSWORD}))
-        });
-        await fetchData();
-        if(currentLegajoId) openLegajoDetail(currentLegajoId); // refresca modal si está abierto
-      }catch(e){
-        console.error('post error', e);
-        alert('Error al enviar datos.');
+      await fetch(googleWebAppUrl,{
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:'data='+encodeURIComponent(JSON.stringify({...payload,password:PASSWORD}))
+      });
+      if (refreshData) await fetchData();
+      if (refreshModal && isDetailModalOpen && currentLegajoId) {
+        openLegajoDetail(currentLegajoId); // solo si sigue abierto
       }
     }
 
@@ -404,13 +391,13 @@
      **********************/
     $('#addSentenceBtn').onclick = ()=> $('#ingresarSentenciaModal').classList.add('show');
     $('#cancelIngresoBtn').onclick = ()=> $('#ingresarSentenciaModal').classList.remove('show');
-    $('#ingresarSentenciaForm').onsubmit = (e)=>{
+    $('#ingresarSentenciaForm').onsubmit = async (e)=>{
       e.preventDefault();
       const fd = new FormData(e.target);
       const payload = Object.fromEntries(fd.entries());
       payload.es_unificada = fd.has('es_unificada');
       payload.action = payload.id_legajo ? 'addSentencia' : 'addLegajoYsentencia';
-      postData(payload);
+      await postData(payload, {refreshData:true, refreshModal:false});
       $('#ingresarSentenciaModal').classList.remove('show');
       showToast('Sentencia guardada');
     };
@@ -419,44 +406,65 @@
      * DETALLE LEGAJO
      **********************/
     const detailModal = $('#legajoDetailModal');
-    $('#closeDetail').onclick = ()=> detailModal.classList.remove('show');
+    $('#closeDetail').onclick = ()=>{
+      detailModal.classList.remove('show');
+      isDetailModalOpen = false;
+    };
 
     function getLegajoById(id){ return (allData.legajos||[]).find(x=>x.id_legajo==id) || {}; }
     function getSentenciasByLegajo(id){ return (allData.sentencias||[]).filter(s=>s.id_legajo==id); }
     function getBeneficiosByLegajo(id){ return (allData.beneficios||[]).filter(b=>b.id_legajo==id); }
     function getTramitesByLegajo(id){ return (allData.tramitesVarios||[]).filter(t=>t.id_legajo==id); }
 
+    // Mapeos estado <-> clave de fechas y orden en timeline
+    const stateOrder = ['Pendiente SPP','Provisorio','Enviado a Defensoría','Enviado a Fiscalía','Aprobado'];
+    const stateToKey = {
+      'Pendiente SPP':'solicitudSPP',
+      'Provisorio':'computoProvisorio',
+      'Enviado a Defensoría':'envioDefensoria',
+      'Enviado a Fiscalía':'envioFiscalia',
+      'Aprobado':'autoAprobacion'
+      // 'Observado' no participa del timeline
+    };
+    const steps = [
+      { key:'solicitudSPP',     label:'SPP/Defensor' },
+      { key:'computoProvisorio',label:'Provisorio' },
+      { key:'envioDefensoria',  label:'Defensoría' },
+      { key:'envioFiscalia',    label:'Fiscalía' },
+      { key:'autoAprobacion',   label:'Aprobación' }
+    ];
+
     function openLegajoDetail(id){
       currentLegajoId=id;
+      isDetailModalOpen = true;
       const leg = getLegajoById(id);
 
       $('#detailTitle').textContent = `${leg.nombre_completo||'Legajo'} — ${id}`;
       if(isAuthenticated){ $('#deleteLegajoBtn').classList.remove('hidden'); $('#editLegajoBtn').classList.remove('hidden'); }
       else { $('#deleteLegajoBtn').classList.add('hidden'); $('#editLegajoBtn').classList.add('hidden'); }
 
-      // Tabs
       $$('.tab-btn').forEach(b=>b.classList.remove('active'));
       const infoBtn = $$('.tab-btn')[0]; infoBtn.classList.add('active');
 
       const tabContent = $('#tab-content');
 
-      function renderTimeline(){
-        let fechas={}; try{ fechas = JSON.parse(leg.fechas_clave_json||'{}'); }catch(e){}
-        const steps = [
-          { key:'solicitudSPP',    label:'SPP/Defensor' },
-          { key:'computoProvisorio', label:'Provisorio' },
-          { key:'envioDefensoria', label:'Defensoría' },
-          { key:'envioFiscalia',   label:'Fiscalía' },
-          { key:'autoAprobacion',  label:'Aprobación' }
-        ];
+      function renderTimeline(legRef){
+        // Usamos el estado actual para marcar current y completed
+        const currentState = legRef.estado_computo || '';
+        const currentIdx = stateOrder.indexOf(currentState); // -1 si no está
+        let fechas={}; try{ fechas = JSON.parse(legRef.fechas_clave_json||'{}'); }catch(e){}
         return `<div class="timeline">
           ${steps.map((s,i)=>`
             <div class="tl-step">
-              <div class="tl-dot ${fechas[s.key]?'active':''}"></div>
+              <div class="tl-dot
+                ${currentIdx>-1 && i<currentIdx ? 'completed' : ''}
+                ${currentIdx===i ? 'current' : ''}"></div>
               <div class="text-xs">${s.label}</div>
-              <div class="text-[11px] ${fechas[s.key]?'':'text-gray-400'}">${fechas[s.key]? new Date(fechas[s.key]).toLocaleDateString(): '—'}</div>
+              <div class="text-[11px] ${fechas[s.key]?'':'text-gray-400'}">
+                ${fechas[s.key]? new Date(fechas[s.key]).toLocaleDateString(): '—'}
+              </div>
             </div>
-            ${i<steps.length-1?`<div class="tl-line ${fechas[s.key]?'active':''}"></div>`:''}
+            ${i<steps.length-1?`<div class="tl-line ${(currentIdx>-1 && i<currentIdx)?'active':''}"></div>`:''}
           `).join('')}
         </div>`;
       }
@@ -481,7 +489,7 @@
 
           <div class="mt-6">
             <h3 class="font-semibold mb-2">Línea de tiempo del cómputo</h3>
-            ${renderTimeline()}
+            <div id="timelineWrap">${renderTimeline(leg)}</div>
             ${isAuthenticated?`
             <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mt-3">
               <button class="btn btn-secondary" onclick="setFechaClave('${leg.id_legajo}','solicitudSPP')">Marcar SPP</button>
@@ -505,21 +513,40 @@
               const el = document.querySelector(sel); if(el) el.disabled=false;
             });
             $('#saveLegajoBtn').classList.remove('hidden');
+
+            // ✅ Cambio inmediato del estado: guarda estado_computo, fecha correspondiente y redibuja timeline
+            $('#editEstado').addEventListener('change', async (ev)=>{
+              const newState = ev.target.value;
+              // 1) Actualizar estado_computo
+              await postData({ action:'updateComputoEstado', id_legajo:leg.id_legajo, newState }, {refreshData:false, refreshModal:false});
+              // 2) Escribir fecha para el paso correspondiente (si aplica)
+              const key = stateToKey[newState];
+              if (key){
+                let fechas={}; try{ fechas = JSON.parse(leg.fechas_clave_json||'{}'); }catch(e){}
+                fechas[key] = new Date().toISOString();
+                await postData({ action:'updateLegajoField', id_legajo:leg.id_legajo, field:'fechas_clave_json', value: JSON.stringify(fechas) }, {refreshData:true, refreshModal:true});
+              } else {
+                // Estados sin clave (p.ej. Observado)
+                await fetchData();
+                if(isDetailModalOpen) openLegajoDetail(leg.id_legajo);
+              }
+            }, { once:true }); // bind una sola vez por sesión de edición
           }
         };
 
-        // Guardar con confirm + feedback
+        // Guardar con confirm + feedback (no reabrir modal si el usuario lo cierra a mitad)
         $('#saveLegajoBtn').onclick = async ()=>{
           if(!confirm('¿Seguro de guardar los cambios?')) return;
           const btn = $('#saveLegajoBtn');
           btn.textContent = 'Guardando datos...'; btn.disabled = true;
-          await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nro_prontuario',value:$('#editProntuario').value});
-          await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nombre_completo',value:$('#editNombre').value});
-          await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'defensor_actual',value:$('#editDefensor').value});
-          await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'fiscal_actual',value:$('#editFiscal').value});
-          await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'estado_computo',value:$('#editEstado').value});
-          await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'fecha_fin_condena',value:$('#editFin').value});
-          await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'link_computo',value:$('#editLink').value});
+
+          // Actualizaciones secuenciales, refrescamos una sola vez al final
+          await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nro_prontuario',value:$('#editProntuario').value},{refreshData:false});
+          await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nombre_completo',value:$('#editNombre').value},{refreshData:false});
+          await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'defensor_actual',value:$('#editDefensor').value},{refreshData:false});
+          await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'fiscal_actual',value:$('#editFiscal').value},{refreshData:false});
+          await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'fecha_fin_condena',value:$('#editFin').value},{refreshData:false});
+          await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'link_computo',value:$('#editLink').value},{refreshData:true, refreshModal:true});
 
           btn.textContent = 'Guardar'; btn.disabled=false;
           ['#editProntuario','#editNombre','#editDefensor','#editFiscal','#editEstado','#editFin','#editLink'].forEach(sel=>{
@@ -546,7 +573,7 @@
 
       function renderComputoTab(){
         $('#tab-content').innerHTML = `
-          ${renderTimeline()}
+          <div id="timelineWrap">${renderTimeline(leg)}</div>
           ${isAuthenticated?`<div class='mt-4 flex flex-wrap gap-2'>
             <button class='btn btn-secondary' onclick="updateEstadoYFecha('${id}','Pendiente SPP','solicitudSPP')">Marcar SPP</button>
             <button class='btn btn-secondary' onclick="updateEstadoYFecha('${id}','Provisorio','computoProvisorio')">Marcar Provisorio</button>
@@ -585,29 +612,34 @@
       renderInfoTab(); // default
 
       // Eliminar legajo
-      $('#deleteLegajoBtn').onclick = ()=>{
+      $('#deleteLegajoBtn').onclick = async ()=>{
         if(!isAuthenticated) return alert('Inicia sesión');
         if(confirm('¿Eliminar legajo y TODOS sus registros vinculados? Esta acción no se puede deshacer.')){
-          postData({action:'deleteLegajoCompleto',id_legajo:id});
+          await postData({action:'deleteLegajoCompleto',id_legajo:id}, {refreshData:true, refreshModal:false});
           detailModal.classList.remove('show');
+          isDetailModalOpen = false;
           showToast('Legajo eliminado');
         }
       };
 
-      detailModal.classList.add('show');  // <-- ahora se muestra
+      detailModal.classList.add('show');
     }
 
-    // Helpers timeline
+    // Helpers timeline usables por botones
     window.setFechaClave = async function(id, key){
       const leg = (allData.legajos||[]).find(x=>x.id_legajo==id) || {};
       let fechas={}; try{ fechas = JSON.parse(leg.fechas_clave_json||'{}'); }catch(e){}
       fechas[key] = new Date().toISOString();
-      await postData({ action:'updateLegajoField', id_legajo:id, field:'fechas_clave_json', value: JSON.stringify(fechas) });
-      openLegajoDetail(id);
+      await postData({ action:'updateLegajoField', id_legajo:id, field:'fechas_clave_json', value: JSON.stringify(fechas) }, {refreshData:true, refreshModal:true});
     }
     window.updateEstadoYFecha = async function(id, newState, key){
-      await postData({ action:'updateComputoEstado', id_legajo:id, newState });
-      await setFechaClave(id, key);
+      await postData({ action:'updateComputoEstado', id_legajo:id, newState }, {refreshData:false, refreshModal:false});
+      if (key){
+        await setFechaClave(id, key);
+      } else {
+        await fetchData();
+        if(isDetailModalOpen) openLegajoDetail(id);
+      }
     }
 
     /**********************
@@ -650,7 +682,7 @@
         if(card){
           c.appendChild(card);
           const newStatus = c.dataset.status;
-          await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:id, newStatus });
+          await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:id, newStatus }, {refreshData:true, refreshModal:false});
           showToast(`Estado movido a: ${newStatus}`, 1500);
         }
       }));
@@ -682,12 +714,17 @@
      **********************/
     applyThemeFromStorage();
 
-    // Cerrar modales al hacer click fuera
+    // Cerrar modales al hacer click fuera (y marcar estado abierto/cerrado)
     document.querySelectorAll('.modal-backdrop').forEach(m=>{
-      m.addEventListener('click', (e)=>{ if(e.target===m) m.classList.remove('show'); });
+      m.addEventListener('click', (e)=>{
+        if(e.target===m){
+          m.classList.remove('show');
+          if(m.id==='legajoDetailModal') isDetailModalOpen = false;
+        }
+      });
     });
 
-    // Cargar datos
+    // Cargar datos iniciales
     fetchData();
   </script>
 </body>
