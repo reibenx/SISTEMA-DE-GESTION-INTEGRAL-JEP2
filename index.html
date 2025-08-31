@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="es" class="">
 <head>
     <meta charset="UTF-8">
@@ -66,6 +66,44 @@
         .kanban-column { min-height: 400px; display: flex; flex-direction: column; }
         .card-container { max-height: 60vh; overflow-y: auto; padding-right: 8px; flex-grow: 1; }
         .edit-field-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+        
+        /* --- Estilos para la Línea de Tiempo del Cómputo --- */
+        .timeline { display: flex; justify-content: space-between; list-style: none; padding: 0; margin: 1rem 0; }
+        .timeline-step { text-align: center; position: relative; flex: 1; }
+        .timeline-step .step-circle {
+            width: 24px; height: 24px; border-radius: 50%;
+            border: 2px solid;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 10;
+            position: relative;
+        }
+        .timeline-step .step-label { font-size: 12px; margin-top: 8px; }
+        .timeline-step::after {
+            content: '';
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            z-index: 1;
+        }
+        .timeline-step:last-child::after { display: none; }
+        .timeline-step.pending .step-circle { border-color: #9ca3af; background-color: #f3f4f6; color: #9ca3af; }
+        .dark .timeline-step.pending .step-circle { border-color: #4b5563; background-color: #374151; color: #9ca3af; }
+        .timeline-step.pending .step-label { color: #9ca3af; }
+        .timeline-step.pending::after { background-color: #d1d5db; }
+        .dark .timeline-step.pending::after { background-color: #4b5563; }
+        .timeline-step.current .step-circle { border-color: #10b981; background-color: #10b981; color: white; animation: pulse 2s infinite; }
+        .timeline-step.current .step-label { color: #10b981; font-weight: bold; }
+        .timeline-step.current::after { background-color: #d1d5db; }
+        .dark .timeline-step.current::after { background-color: #4b5563; }
+        .timeline-step.completed .step-circle { border-color: #10b981; background-color: #10b981; color: white; }
+        .timeline-step.completed .step-label { color: #10b981; }
+        .timeline-step.completed::after { background-color: #10b981; }
+        .timeline-step.clickable { cursor: pointer; }
+        .timeline-step.clickable:hover .step-circle { transform: scale(1.2); }
     </style>
 </head>
 <body class="text-gray-800">
@@ -131,11 +169,22 @@
         <!-- VISTA: MONITOR DE BENEFICIOS -->
         <section id="view-beneficios" class="hidden">
             <header class="flex flex-col md:flex-row justify-between items-center mb-6">
-                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 w-full">
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                     <div class="bg-white p-4 rounded-xl relief-border bg-white-relief"><h3 class="text-sm font-medium dark:text-gray-400">Total Activos</h3><p id="total-activos" class="text-3xl font-bold">0</p></div>
                     <div class="bg-white p-4 rounded-xl relief-border bg-white-relief"><h3 class="text-sm font-medium dark:text-gray-400">Tiempo Prom. en Gabinete</h3><p id="avg-time" class="text-3xl font-bold">N/A</p></div>
                 </div>
             </header>
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                <div class="flex items-center space-x-4">
+                    <input type="text" id="searchBeneficiosInput" placeholder="Buscar por N° o Interno..." class="w-full md:w-64 px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 relief-border">
+                    <button id="archiveViewBtn" title="Ver Archivados" class="p-2.5 relief-button rounded-xl text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"></path><path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
+                    </button>
+                </div>
+                <button id="addCaseBtn" class="bg-indigo-600 text-white font-bold py-2.5 px-5 rounded-xl hover:bg-indigo-700 relief-button hidden mt-4 md:mt-0">
+                    + Nuevo Trámite Beneficio
+                </button>
+            </div>
             <div id="kanban-board"></div>
              <div id="beneficiosLoader" class="text-center py-10">
                 <p class="mt-2 text-gray-500">Cargando beneficios...</p>
@@ -228,14 +277,8 @@
             <div class="flex-grow overflow-y-auto mt-4">
                 <div id="tab-computo" class="tab-content">
                     <h3 class="font-bold text-lg mb-2">Circuito del Cómputo</h3>
-                    <div id="computo-buttons-container" class="flex flex-wrap gap-2 mb-4">
-                        <button data-action="updateComputo" data-estado="Designación Defensor SPP" class="text-sm p-2 rounded-lg relief-button">Designación Defensor SPP</button>
-                        <button data-action="updateComputo" data-estado="Cómputo Provisorio" class="text-sm p-2 rounded-lg relief-button">Cómputo Provisorio</button>
-                        <button data-action="updateComputo" data-estado="Enviado a Fiscalía" class="text-sm p-2 rounded-lg relief-button">Enviar a Fiscalía</button>
-                        <button data-action="updateComputo" data-estado="Enviado a Defensoría" class="text-sm p-2 rounded-lg relief-button">Enviar a Defensoría</button>
-                        <button data-action="updateComputo" data-estado="Aprobado" class="text-sm p-2 rounded-lg relief-button">Aprobar Cómputo</button>
-                    </div>
-                    <h3 class="font-bold text-lg mb-2">Sentencias Vinculadas</h3>
+                    <ol id="computo-timeline" class="timeline"></ol>
+                    <h3 class="font-bold text-lg mb-2 mt-6">Sentencias Vinculadas</h3>
                     <div id="detail-sentencias-list"></div>
                 </div>
                 <div id="tab-beneficios" class="tab-content hidden">
@@ -429,7 +472,7 @@
     </footer>
 <script>
 // ----------- CONFIGURACIÓN -----------
-const googleWebAppUrl = 'https://script.google.com/macros/s/AKfycbwNaFpK6ZvrxotfhoOOTkOqVaLMV-B5-OqyW-tWO3K9uYNKgJl6qXlHBV5_R1jK3eOQ/exec';
+const googleWebAppUrl = 'https://script.google.com/macros/s/AKfycbzVhxKukW2x2I_cO1AADDyTCSBUQQJW18T9A148ISHoQDIh8adpsVlYpxn6MwudJqz7/exec';
 const PASSWORD = '454545';
 const KANBAN_COLUMNS = [
     { status: 'Ingresado', color: 'bg-gray-300', textColor: 'text-gray-800' },
@@ -1249,4 +1292,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
