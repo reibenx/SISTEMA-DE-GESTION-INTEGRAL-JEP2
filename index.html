@@ -1,226 +1,1251 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión de Legajos</title>
+    <title>Gestión de Legajos - Juzgado de Ejecución Penal N°2</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: sans-serif; }
-        .timeline-item { display: flex; align-items: center; margin-bottom: 1rem; }
-        .timeline-dot { width: 20px; height: 20px; border-radius: 50%; background-color: #ccc; margin-right: 1rem; }
-        .timeline-item.completed .timeline-dot { background-color: #4caf50; }
-        .timeline-item.active .timeline-dot { background-color: #2196f3; }
-        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
-        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; }
+        :root {
+            --light-bg-general: #e5e7eb;
+            --light-bg-content: #ffffff;
+            --light-bg-column: #f9fafb;
+            --light-text-main: #111827;
+            --light-text-secondary: #374151;
+            --light-card-bg: #ffffff;
+            --light-card-text-main: #111827;
+            --light-card-text-secondary: #6b7280;
+            --dark-bg-general: #0d1117;
+            --dark-bg-content: #161b22;
+            --dark-border: #30363d;
+            --dark-card-bg: #21262d;
+            --dark-text-main: #f0f6fc;
+            --dark-text-secondary: #8b949e;
+            --dark-input-bg: #0d1117;
+            --dark-card-text-main: #f0f6fc;
+            --dark-card-text-secondary: #8b949e;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--light-bg-general); color: var(--light-text-main); transition: background-color 0.3s, color 0.3s; }
+        .dark body { background-color: var(--dark-bg-general); color: var(--dark-text-secondary); }
+        .main-header, .bg-white-relief, .modal-content, .kanban-column { background-color: var(--light-bg-content); }
+        .dark .main-header, .dark .bg-white-relief, .dark .modal-content, .dark .kanban-column { background-color: var(--dark-bg-content); border-color: var(--dark-border); }
+        .dark .kanban-card { background-color: var(--dark-card-bg); border-color: var(--dark-border); }
+        .dark h1, .dark h2, .dark h3, .dark p, .dark .text-gray-800, .dark label { color: var(--dark-text-main); }
+        .dark .text-gray-500 { color: var(--dark-text-secondary); }
+        .dark input, .dark select, .dark textarea { background-color: var(--dark-input-bg); border-color: var(--dark-border); color: var(--dark-text-secondary); }
+        .relief-border { border: 1px solid #e5e7eb; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); }
+        .dark .relief-border { border-color: var(--dark-border); }
+        .relief-button { transition: all 0.2s ease-in-out; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); }
+        .relief-button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); }
+        .nav-link { cursor: pointer; padding: 8px 16px; border-bottom: 3px solid transparent; }
+        .nav-link.active { border-color: #4f46e5; color: #4f46e5; font-weight: 600; }
+        .dark .nav-link.active { border-color: #818cf8; color: #818cf8; }
+        .tab-link { cursor: pointer; padding: 8px 16px; border-bottom: 2px solid transparent; }
+        .tab-link.active { border-color: #4f46e5; color: #4f46e5; font-weight: 600; }
+        .dark .tab-link.active { border-color: #818cf8; color: #818cf8; }
+        .kanban-card.draggable { cursor: grab; }
+        .kanban-card.draggable:active { cursor: grabbing; }
+        .dragging { opacity: 0.5; }
+        .drag-over { background-color: #dbeafe; }
+        .dark .drag-over { background-color: #1e3a8a; }
+        .action-btn { position: absolute; top: 8px; opacity: 0.5; transition: all 0.2s ease-in-out; }
+        .delete-btn { right: 8px; }
+        .archive-btn { right: 36px; }
+        .kanban-card:hover .action-btn { opacity: 1; }
+        .action-btn:hover { transform: scale(1.2); }
+        .delete-btn:hover { color: #ef4444; }
+        .archive-btn:hover { color: #6366f1; }
+        @keyframes blinking-alarm {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 10px 5px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        body.alarms-active .kanban-card.alarm { animation: blinking-alarm 1.5s infinite; }
+        .kanban-column { min-height: 400px; display: flex; flex-direction: column; }
+        .card-container { max-height: 60vh; overflow-y: auto; padding-right: 8px; flex-grow: 1; }
+        .edit-field-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
-<body class="bg-gray-100">
-
-    <!-- PANTALLA DE LOGIN -->
-    <div id="login-screen" class="p-8">
-        <h1 class="text-2xl font-bold mb-4">Iniciar Sesión</h1>
-        <form id="login-form">
-            <input type="password" id="password" placeholder="Contraseña" class="p-2 border rounded w-full mb-4" required>
-            <button type="submit" class="bg-blue-500 text-white p-2 rounded w-full">Ingresar</button>
-            <p id="login-error" class="text-red-500 mt-2"></p>
-        </form>
-    </div>
-
-    <!-- APLICACIÓN PRINCIPAL (Oculta al inicio) -->
-    <div id="app" class="hidden p-8">
-        <h1 class="text-3xl font-bold mb-6">Sistema de Gestión Integral de Legajos</h1>
-        
-        <!-- Dashboard Principal -->
-        <div id="dashboard-view">
-            <h2 class="text-2xl font-semibold mb-4">Legajos Activos</h2>
-            <button id="show-new-legajo-modal" class="bg-green-500 text-white p-2 rounded mb-4">Nuevo Legajo</button>
-            <div id="legajos-list" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Las tarjetas de legajos se insertarán aquí -->
+<body class="text-gray-800">
+    <!-- ENCABEZADO -->
+    <header class="w-full bg-white p-2 flex items-center justify-between relief-border main-header">
+        <div class="flex-grow text-center">
+            <h1 class="text-xl md:text-3xl font-bold text-gray-800">Juzgado de Ejecución Penal N° 2</h1>
+            <h2 id="view-title" class="text-lg font-semibold text-gray-700">Dashboard de Legajos</h2>
+            <p id="header-subtitle" class="text-sm text-gray-500">Modo de solo lectura.</p>
+        </div>
+        <div style="width: 150px;" class="flex flex-col items-end pr-4">
+            <h3 class="text-xs font-semibold text-gray-500">Estado</h3>
+            <div id="connection-status" class="flex items-center space-x-2 text-sm">
+                <span class="relative flex h-3 w-3"><span id="connection-dot" class="relative inline-flex rounded-full h-3 w-3 bg-gray-500"></span></span>
+                <span id="connection-text">Conectando...</span>
             </div>
         </div>
+    </header>
 
-        <!-- Vista de Detalle de Legajo -->
-        <div id="legajo-detail-view" class="hidden">
-            <button id="back-to-dashboard" class="bg-gray-500 text-white p-2 rounded mb-4">&larr; Volver al Dashboard</button>
-            <h2 id="legajo-detail-title" class="text-2xl font-semibold mb-4"></h2>
-            <div class="bg-white p-6 rounded shadow">
-                <h3 class="text-xl font-bold mb-4">Línea de Tiempo del Cómputo</h3>
-                <div id="computo-timeline">
-                    <!-- La línea de tiempo se generará aquí -->
+    <!-- Contenedor Principal -->
+    <main class="container mx-auto p-4 md:p-6">
+        <!-- NAVEGACIÓN PRINCIPAL -->
+        <nav class="flex justify-center items-center mb-6 bg-white-relief p-2 rounded-xl relief-border">
+            <button type="button" id="nav-legajos" class="nav-link active">Dashboard de Legajos</button>
+            <button type="button" id="nav-beneficios" class="nav-link">Monitor de Beneficios</button>
+        </nav>
+
+        <!-- VISTA: DASHBOARD DE LEGAJOS -->
+        <section id="view-legajos">
+            <header class="flex flex-col md:flex-row justify-between items-center mb-6">
+                <div class="flex items-center space-x-4">
+                    <input type="text" id="searchLegajosInput" placeholder="Buscar por prontuario o nombre..." class="w-full md:w-64 px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 relief-border">
+                </div>
+                <div class="flex items-center space-x-2 mt-4 md:mt-0">
+                    <button id="mainSettingsBtn" aria-label="Abrir configuración" class="p-2.5 relief-button rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 13a3 3 0 100-6 3 3 0 000 6z"></path><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734-2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379-1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path></svg></button>
+                    <button id="mainThemeToggle" aria-label="Cambiar tema de color" class="p-2.5 relief-button rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"><svg id="main-theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg><svg id="main-theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg></button>
+                    <button id="authBtn" class="bg-green-600 text-white font-bold py-2.5 px-5 rounded-xl hover:bg-green-700 relief-button">Iniciar Sesión</button>
+                    <button id="addSentenceBtn" class="bg-indigo-600 text-white font-bold py-2.5 px-5 rounded-xl hover:bg-indigo-700 relief-button hidden">
+                        + Ingresar Sentencia
+                    </button>
+                </div>
+            </header>
+            <div class="bg-white p-4 rounded-xl relief-border bg-white-relief overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">ID Legajo</th>
+                            <th scope="col" class="px-6 py-3">Prontuario</th>
+                            <th scope="col" class="px-6 py-3">Nombre Completo</th>
+                            <th scope="col" class="px-6 py-3">Defensor</th>
+                            <th scope="col" class="px-6 py-3">Estado Cómputo</th>
+                            <th scope="col" class="px-6 py-3">Fin Condena</th>
+                        </tr>
+                    </thead>
+                    <tbody id="legajosTableBody"></tbody>
+                </table>
+                 <div id="legajosLoader" class="text-center py-10">
+                    <p class="mt-2 text-gray-500">Cargando legajos...</p>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <!-- MODAL PARA NUEVO LEGAJO -->
-    <div id="new-legajo-modal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold mb-4">Crear Nuevo Legajo</h3>
-            <form id="new-legajo-form">
-                <input type="text" name="nombre_completo" placeholder="Nombre Completo" class="p-2 border rounded w-full mb-2" required>
-                <input type="text" name="nro_prontuario" placeholder="N° Prontuario" class="p-2 border rounded w-full mb-2">
-                <hr class="my-4">
-                <h4 class="font-semibold mb-2">Datos de la Sentencia</h4>
-                <input type="text" name="nro_causa" placeholder="N° Causa" class="p-2 border rounded w-full mb-2" required>
-                <input type="text" name="delito" placeholder="Delito" class="p-2 border rounded w-full mb-2" required>
-                <input type="text" name="pena_impuesta" placeholder="Pena Impuesta" class="p-2 border rounded w-full mb-2" required>
-                <input type="date" name="fecha_sentencia" class="p-2 border rounded w-full mb-4" required>
-                <div class="flex justify-end">
-                    <button type="button" class="btn-cancel bg-gray-300 p-2 rounded mr-2">Cancelar</button>
-                    <button type="submit" class="bg-blue-500 text-white p-2 rounded">Crear</button>
+        <!-- VISTA: MONITOR DE BENEFICIOS -->
+        <section id="view-beneficios" class="hidden">
+            <header class="flex flex-col md:flex-row justify-between items-center mb-6">
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 w-full">
+                    <div class="bg-white p-4 rounded-xl relief-border bg-white-relief"><h3 class="text-sm font-medium dark:text-gray-400">Total Activos</h3><p id="total-activos" class="text-3xl font-bold">0</p></div>
+                    <div class="bg-white p-4 rounded-xl relief-border bg-white-relief"><h3 class="text-sm font-medium dark:text-gray-400">Tiempo Prom. en Gabinete</h3><p id="avg-time" class="text-3xl font-bold">N/A</p></div>
+                </div>
+            </header>
+            <div id="kanban-board"></div>
+             <div id="beneficiosLoader" class="text-center py-10">
+                <p class="mt-2 text-gray-500">Cargando beneficios...</p>
+            </div>
+            <div id="chart-container" class="bg-white p-6 rounded-xl mt-6 hidden relief-border bg-white-relief">
+                 <h3 class="text-lg font-medium mb-4 dark:text-white">Distribución de Beneficios Activos</h3>
+                 <div class="relative h-80"><canvas id="benefitsChart"></canvas></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODALS -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+        <div class="bg-white rounded-xl p-8 w-full max-w-sm transform transition-all dark:bg-gray-800 relief-border modal-content">
+            <h2 id="loginModalTitle" class="text-2xl font-bold mb-4 dark:text-white">Acceso de Administrador</h2>
+            <form id="loginForm">
+                <div class="mb-4">
+                    <label for="password" class="block text-sm font-medium dark:text-gray-300">Contraseña</label>
+                    <input type="password" id="password" name="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                </div>
+                <p id="loginError" class="text-red-500 text-sm mb-4 hidden">Contraseña incorrecta.</p>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="cancelLoginBtn" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 relief-button">Cancelar</button>
+                    <button type="submit" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl hover:bg-indigo-700 relief-button">Ingresar</button>
                 </div>
             </form>
         </div>
     </div>
-
-<script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyEGz3VreqCUQ-Blr3Iun-js2F2ihkdfaJc4TbnLMJ4kJFfpQHGYcaWr6LKQSOpsPD5/exec"; // ¡IMPORTANTE!
-    const appState = { password: null, data: {} };
-
-    document.addEventListener('DOMContentLoaded', () => {
-        // Eventos
-        document.getElementById('login-form').addEventListener('submit', handleLogin);
-        document.getElementById('show-new-legajo-modal').addEventListener('click', () => openModal('new-legajo-modal'));
-        document.getElementById('new-legajo-form').addEventListener('submit', handleCreateNewLegajo);
-        document.querySelectorAll('.btn-cancel').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal').id)));
-        document.getElementById('back-to-dashboard').addEventListener('click', () => showView('dashboard-view'));
-    });
-
-    async function handleLogin(e) {
-        e.preventDefault();
-        appState.password = document.getElementById('password').value;
-        const loginError = document.getElementById('login-error');
-        loginError.textContent = '';
-
-        try {
-            const result = await apiCall('loginAndGetAllData');
-            appState.data = result.data;
-            
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
-            renderDashboard();
-        } catch (error) {
-            loginError.textContent = `Error: ${error.message}`;
-            appState.password = null;
-        }
-    }
-
-    async function handleCreateNewLegajo(e) {
-        e.preventDefault();
-        const form = e.target;
-        const formData = new FormData(form);
-        const payload = Object.fromEntries(formData.entries());
-
-        try {
-            const result = await apiCall('crearNuevoLegajo', payload);
-            alert(result.message);
-            closeModal('new-legajo-modal');
-            // Recargar todos los datos para reflejar los cambios
-            const updatedResult = await apiCall('loginAndGetAllData');
-            appState.data = updatedResult.data;
-            renderDashboard();
-        } catch (error) {
-            alert(`Error: ${error.message}`);
-        }
-    }
-
-    // Función central para llamar a la API
-    async function apiCall(action, payload = {}) {
-        if (!appState.password) throw new Error("No autenticado.");
-
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                password: appState.password,
-                action: action,
-                ...payload
-            }),
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (!response.ok) throw new Error(`Error de red: ${response.statusText}`);
-        
-        const result = await response.json();
-        if (result.status !== 'success') throw new Error(result.message);
-        
-        return result;
-    }
-
-    // --- Funciones de Renderizado ---
-    function renderDashboard() {
-        const list = document.getElementById('legajos-list');
-        list.innerHTML = '';
-        if (!appState.data.legajos || appState.data.legajos.length === 0) {
-            list.innerHTML = '<p>No hay legajos para mostrar.</p>';
-            return;
-        }
-
-        appState.data.legajos.forEach(legajo => {
-            const card = document.createElement('div');
-            card.className = 'bg-white p-4 rounded shadow cursor-pointer hover:shadow-lg';
-            card.innerHTML = `
-                <h3 class="font-bold text-lg">${legajo.nombre_completo}</h3>
-                <p class="text-sm text-gray-600">Legajo: ${legajo.id_legajo}</p>
-                <p class="text-sm text-gray-600">Prontuario: ${legajo.nro_prontuario || 'N/A'}</p>
-            `;
-            card.addEventListener('click', () => showLegajoDetail(legajo.id_legajo));
-            list.appendChild(card);
-        });
-    }
-
-    function showLegajoDetail(legajoId) {
-        const legajo = appState.data.legajos.find(l => l.id_legajo === legajoId);
-        const computo = appState.data.computos.find(c => c.id_legajo === legajoId && c.estado !== 'Aprobado'); // Muestra el último no aprobado
-        
-        document.getElementById('legajo-detail-title').textContent = `Detalle de Legajo: ${legajo.nombre_completo}`;
-        
-        renderTimeline(computo);
-        showView('legajo-detail-view');
-    }
-
-    function renderTimeline(computo) {
-        const timelineContainer = document.getElementById('computo-timeline');
-        if (!computo) {
-            timelineContainer.innerHTML = '<p>No hay un cómputo activo para este legajo.</p>';
-            return;
-        }
-
-        const steps = [
-            { name: 'Solicitud Defensor SPP', dateField: 'fecha_solicitud_defensor' },
-            { name: 'Enviado a Fiscalía', dateField: 'fecha_envio_fiscalia' },
-            { name: 'Regreso de Fiscalía', dateField: 'fecha_regreso_fiscalia' },
-            { name: 'Enviado a Defensa', dateField: 'fecha_envio_defensa' },
-            { name: 'Regreso de Defensa', dateField: 'fecha_regreso_defensa' },
-            { name: 'Auto de Aprobación', dateField: 'fecha_auto_aprobacion' }
-        ];
-
-        timelineContainer.innerHTML = steps.map(step => {
-            const date = computo[step.dateField] ? new Date(computo[step.dateField]).toLocaleDateString() : '';
-            const statusClass = date ? 'completed' : (computo.estado === step.name ? 'active' : '');
-            return `
-                <div class="timeline-item ${statusClass}">
-                    <div class="timeline-dot"></div>
-                    <div>
-                        <p class="font-semibold">${step.name}</p>
-                        <p class="text-sm text-gray-500">${date}</p>
+    <div id="ingresarSentenciaModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-40" role="dialog" aria-modal="true" aria-labelledby="ingresarSentenciaModalTitle">
+        <div class="bg-white rounded-xl p-8 w-full max-w-lg modal-content">
+            <h2 id="ingresarSentenciaModalTitle" class="text-2xl font-bold mb-4">Ingresar Nueva Sentencia</h2>
+            <form id="ingresarSentenciaForm">
+                <div id="wizard-step-1">
+                    <label class="block text-sm font-medium">Buscar por N° Prontuario o Nombre</label>
+                    <input type="text" id="searchInternoInput" class="mt-1 block w-full px-3 py-2 border rounded-xl" placeholder="Ej: 12345 o Juan Perez">
+                    <div id="searchResults" class="mt-2 max-h-40 overflow-y-auto"></div>
+                    <button type="button" id="createNewLegajoBtn" class="mt-2 w-full bg-green-500 text-white p-2 rounded-lg relief-button">... o Crear Nuevo Legajo</button>
+                </div>
+                <div id="wizard-step-2" class="hidden">
+                    <input type="hidden" id="existingLegajoId" name="id_legajo">
+                    <h3 id="wizard-header" class="font-semibold mb-2"></h3>
+                    <div id="new-legajo-fields" class="hidden grid grid-cols-2 gap-4 mb-4">
+                         <div><label class="block text-sm">Nombre Completo</label><input type="text" name="nombre_completo" class="mt-1 w-full border rounded-xl px-2 py-1"></div>
+                         <div><label class="block text-sm">N° Prontuario</label><input type="text" name="nro_prontuario" class="mt-1 w-full border rounded-xl px-2 py-1"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-sm">N° Causa</label><input type="text" name="nro_causa" class="mt-1 w-full border rounded-xl px-2 py-1" required></div>
+                        <div><label class="block text-sm">Fecha Sentencia</label><input type="date" name="fecha_sentencia" class="mt-1 w-full border rounded-xl px-2 py-1" required></div>
+                    </div>
+                    <div class="mt-4"><label class="block text-sm">Delito</label><input type="text" name="delito" class="mt-1 w-full border rounded-xl px-2 py-1" required></div>
+                    <div class="mt-4"><label class="block text-sm">Pena Impuesta</label><input type="text" name="pena_impuesta" class="mt-1 w-full border rounded-xl px-2 py-1" required></div>
+                    <div class="mt-4"><label class="block text-sm">Enlace a Sentencia (Opcional)</label><input type="url" name="enlace_sentencia" class="mt-1 w-full border rounded-xl px-2 py-1" placeholder="https://..."></div>
+                    <div class="mt-4 flex items-center">
+                        <input type="checkbox" id="es_unificada" name="es_unificada" class="h-4 w-4">
+                        <label for="es_unificada" class="ml-2">Es sentencia unificada</label>
                     </div>
                 </div>
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button type="button" id="cancelIngresoBtn" class="bg-gray-200 font-bold py-2 px-4 rounded-xl relief-button">Cancelar</button>
+                    <button type="submit" id="submitSentenciaBtn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl relief-button hidden">Guardar Sentencia</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="legajoDetailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-30" role="dialog" aria-modal="true" aria-labelledby="legajoDetailModalTitle">
+        <div class="bg-white rounded-xl p-8 w-full max-w-4xl max-h-[90vh] flex flex-col modal-content">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 id="legajoDetailModalTitle" class="text-2xl font-bold">Detalle del Legajo</h2>
+                    <p class="text-gray-600">ID: <span id="detail-id_legajo" class="font-mono"></span></p>
+                </div>
+                <button type="button" id="closeDetailBtn" class="p-2 -mt-2 -mr-2 text-2xl" aria-label="Cerrar detalle">&times;</button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 my-4 p-4 border rounded-xl">
+                <div class="col-span-1 md:col-span-2"><span class="font-semibold">Nombre:</span> <span id="detail-nombre_completo"></span></div>
+                <div><span class="font-semibold">Prontuario:</span> <span id="detail-nro_prontuario"></span></div>
+                <div><span class="font-semibold">Estado Cómputo:</span> <span id="detail-estado_computo" class="font-bold"></span></div>
+                <div class="flex items-center space-x-2"><span class="font-semibold">Defensor:</span> <span id="detail-defensor_actual"></span><button class="text-xs edit-field-btn hidden" data-field="defensor_actual" aria-label="Editar defensor">✏️</button></div>
+                <div class="flex items-center space-x-2"><span class="font-semibold">Fiscal:</span> <span id="detail-fiscal_actual"></span><button class="text-xs edit-field-btn hidden" data-field="fiscal_actual" aria-label="Editar fiscal">✏️</button></div>
+                <div class="flex items-center space-x-2"><span class="font-semibold">Fin Condena:</span> <span id="detail-fecha_fin_condena"></span><button class="text-xs edit-field-btn hidden" data-field="fecha_fin_condena" aria-label="Editar fecha fin de condena">✏️</button></div>
+            </div>
+
+            <div class="flex border-b">
+                <button type="button" class="tab-link active" data-tab="tab-computo">Sentencias y Cómputo</button>
+                <button type="button" class="tab-link" data-tab="tab-beneficios">Beneficios</button>
+                <button type="button" class="tab-link" data-tab="tab-tramites">Trámites Varios</button>
+            </div>
+
+            <div class="flex-grow overflow-y-auto mt-4">
+                <div id="tab-computo" class="tab-content">
+                    <h3 class="font-bold text-lg mb-2">Circuito del Cómputo</h3>
+                    <div id="computo-buttons-container" class="flex flex-wrap gap-2 mb-4">
+                        <button data-action="updateComputo" data-estado="Designación Defensor SPP" class="text-sm p-2 rounded-lg relief-button">Designación Defensor SPP</button>
+                        <button data-action="updateComputo" data-estado="Cómputo Provisorio" class="text-sm p-2 rounded-lg relief-button">Cómputo Provisorio</button>
+                        <button data-action="updateComputo" data-estado="Enviado a Fiscalía" class="text-sm p-2 rounded-lg relief-button">Enviar a Fiscalía</button>
+                        <button data-action="updateComputo" data-estado="Enviado a Defensoría" class="text-sm p-2 rounded-lg relief-button">Enviar a Defensoría</button>
+                        <button data-action="updateComputo" data-estado="Aprobado" class="text-sm p-2 rounded-lg relief-button">Aprobar Cómputo</button>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Sentencias Vinculadas</h3>
+                    <div id="detail-sentencias-list"></div>
+                </div>
+                <div id="tab-beneficios" class="tab-content hidden">
+                    <button id="addBeneficioBtn" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-xl relief-button mb-4">+ Nuevo Beneficio</button>
+                    <div id="detail-beneficios-list"></div>
+                </div>
+                <div id="tab-tramites" class="tab-content hidden">
+                     <button id="addTramiteBtn" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-xl relief-button mb-4">+ Nuevo Trámite</button>
+                    <div id="detail-tramites-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="caseModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-20" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md transform transition-all dark:bg-gray-800 relief-border modal-content">
+            <h2 id="modalTitle" class="text-2xl font-bold mb-4 dark:text-white">Agregar Nuevo Trámite</h2>
+            <div class="max-h-[80vh] overflow-y-auto pr-4">
+                <form id="caseForm">
+                    <input type="hidden" id="caseId" name="caseId">
+                    <input type="hidden" id="legajoIdForBeneficio" name="id_legajo">
+                    <div class="mb-4"><label for="expediente" class="block text-sm font-medium dark:text-gray-300">N° de Expediente</label><input type="text" id="expediente" name="expediente" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required></div>
+                    <div class="mb-4"><label for="interno" class="block text-sm font-medium dark:text-gray-300">Nombre del Interno/a</label><input type="text" id="interno" name="interno" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required></div>
+                    <div class="mb-4"><label for="fechaIngreso" class="block text-sm font-medium dark:text-gray-300">Fecha de Ingreso</label><input type="date" id="fechaIngreso" name="fechaIngreso" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required></div>
+                    <div class="mb-4"><label for="beneficio" class="block text-sm font-medium dark:text-gray-300">Tipo de Beneficio</label><select id="beneficio" name="beneficio" class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-xl shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600" required><option>Salidas Transitorias</option><option>Prisión Domiciliaria</option><option>Estímulo Educativo</option><option>Libertad Asistida</option><option>Libertad Condicional</option><option>Régimen Preparatorio</option><option>Otro</option></select></div>
+                    <div id="stateDateContainer" class="mb-6 hidden border-t pt-4 mt-4">
+                        <label id="stateDateEditLabel" for="stateDateEdit" class="block text-sm font-medium dark:text-gray-300">Fecha de Estado</label>
+                        <input type="date" id="stateDateEdit" name="stateDateEdit" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="hidden" id="stateDateField" name="stateDateField">
+                    </div>
+                    <div id="finalizeFieldsContainer" class="hidden border-t pt-4 mt-4">
+                        <div class="mb-4">
+                            <label for="motivoFinalizadoEdit" class="block text-sm font-medium dark:text-gray-300">Motivo de Finalización</label>
+                            <textarea id="motivoFinalizadoEdit" name="motivoFinalizadoEdit" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                        </div>
+                        <div class="mb-6">
+                            <label for="enlaceResolucionEdit" class="block text-sm font-medium dark:text-gray-300">Enlace a Resolución</label>
+                            <input type="url" id="enlaceResolucionEdit" name="enlaceResolucionEdit" placeholder="https://..." class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="flex justify-end space-x-4 pt-4">
+                <button type="button" id="cancelBtn" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 relief-button">Cancelar</button>
+                <button type="submit" form="caseForm" id="saveCaseBtn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl hover:bg-indigo-700 relief-button w-36 flex justify-center items-center">Guardar</button>
+            </div>
+        </div>
+    </div>
+    <div id="finalizeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-30" role="dialog" aria-modal="true" aria-labelledby="finalizeModalTitle">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md transform transition-all dark:bg-gray-800 relief-border modal-content">
+            <h2 id="finalizeModalTitle" class="text-2xl font-bold mb-4 dark:text-white">Finalizar Trámite</h2>
+            <form id="finalizeForm">
+                <input type="hidden" id="finalizeCaseId">
+                <div class="mb-4">
+                    <label for="motivoFinalizado" class="block text-sm font-medium dark:text-gray-300">Motivo / Razón de Finalización</label>
+                    <textarea id="motivoFinalizado" name="motivoFinalizado" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required></textarea>
+                </div>
+                <div class="mb-6">
+                    <label for="enlaceResolucion" class="block text-sm font-medium dark:text-gray-300">Enlace a Resolución (Opcional)</label>
+                    <input type="url" id="enlaceResolucion" name="enlaceResolucion" placeholder="https://..." class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="cancelFinalizeBtn" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 relief-button">Cancelar</button>
+                    <button type="submit" class="bg-green-600 text-white font-bold py-2 px-4 rounded-xl hover:bg-green-700 relief-button">Confirmar Finalización</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="deleteConfirmationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-30" role="alertdialog" aria-modal="true" aria-labelledby="deleteModalTitle" aria-describedby="deleteModalDesc">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md transform transition-all dark:bg-gray-800 relief-border modal-content">
+            <h2 id="deleteModalTitle" class="text-2xl font-bold mb-4 dark:text-white">Confirmar Eliminación</h2>
+            <p id="deleteModalDesc" class="text-gray-600 dark:text-gray-300 mb-6">¿Estás seguro de que deseas eliminar este beneficio? Esta acción no se puede deshacer.</p>
+            <div class="flex justify-end space-x-4"><button type="button" id="cancelDeleteBtn" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 relief-button">Cancelar</button><button type="button" id="confirmDeleteBtn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-xl hover:bg-red-700 relief-button">Eliminar</button></div>
+        </div>
+    </div>
+    <div id="archiveConfirmationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-30" role="alertdialog" aria-modal="true" aria-labelledby="archiveModalTitle" aria-describedby="archiveModalDesc">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md transform transition-all dark:bg-gray-800 relief-border modal-content">
+            <h2 id="archiveModalTitle" class="text-2xl font-bold mb-4 dark:text-white">Confirmar Archivo</h2>
+            <p id="archiveModalDesc" class="text-gray-600 dark:text-gray-300 mb-6">¿Estás seguro de que deseas archivar este trámite? Se moverá al historial de "Archivados" y desaparecerá del monitor principal.</p>
+            <div class="flex justify-end space-x-4"><button type="button" id="cancelArchiveBtn" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 relief-button">Cancelar</button><button type="button" id="confirmArchiveBtn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl hover:bg-indigo-700 relief-button">Archivar</button></div>
+        </div>
+    </div>
+    <div id="archiveViewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-40" role="dialog" aria-modal="true" aria-labelledby="archiveViewModalTitle">
+        <div class="bg-white rounded-xl p-8 w-full max-w-6xl h-5/6 flex flex-col dark:bg-gray-800 relief-border modal-content">
+            <h2 id="archiveViewModalTitle" class="text-2xl font-bold mb-4 dark:text-white">Historial de Trámites Archivados</h2>
+            <input type="text" id="archiveSearchInput" placeholder="Buscar en archivos..." class="w-full md:w-1/3 px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 relief-border mb-4">
+            <div class="flex-grow overflow-y-auto">
+                <table id="archiveTable" class="w-full text-sm text-left">
+                    <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">N° Expediente</th>
+                            <th scope="col" class="px-6 py-3">Interno/a</th>
+                            <th scope="col" class="px-6 py-3">Beneficio</th>
+                            <th scope="col" class="px-6 py-3">Fecha Finalizado</th>
+                            <th scope="col" class="px-6 py-3">Motivo</th>
+                            <th scope="col" class="px-6 py-3">Resolución</th>
+                        </tr>
+                    </thead>
+                    <tbody id="archiveTableBody"></tbody>
+                </table>
+            </div>
+            <div class="flex justify-end mt-4">
+                <button type="button" id="closeArchiveViewBtn" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 relief-button">Cerrar</button>
+            </div>
+        </div>
+    </div>
+    <div id="alertModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-40" role="alertdialog" aria-modal="true" aria-labelledby="alertTitle" aria-describedby="alertMessage">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md transform transition-all dark:bg-gray-800 relief-border modal-content">
+            <h2 id="alertTitle" class="text-2xl font-bold mb-4 text-yellow-500">Alerta</h2>
+            <p id="alertMessage" class="text-gray-600 dark:text-gray-300 mb-6"></p>
+            <div class="flex justify-end"><button type="button" id="closeAlertBtn" class="bg-yellow-500 text-white font-bold py-2 px-4 rounded-xl hover:bg-yellow-600 relief-button">Entendido</button></div>
+        </div>
+    </div>
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-20" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+        <div class="bg-white rounded-xl p-8 w-full max-w-lg transform transition-all dark:bg-gray-800 relief-border modal-content">
+            <h2 id="settingsModalTitle" class="text-2xl font-bold mb-4 dark:text-white">Configuración</h2>
+            <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+                <button type="button" id="appearance-tab" class="settings-tab active">Apariencia</button>
+                <button type="button" id="colors-tab" class="settings-tab">Colores Tarjetas</button>
+                <button type="button" id="password-tab" class="settings-tab">Seguridad</button>
+            </div>
+            <div id="appearance-panel">
+                <p class="text-sm text-gray-500 mb-6">Ajusta los colores principales de la interfaz para el modo claro y oscuro.</p>
+                <div class="max-h-72 overflow-y-auto pr-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 border-b pb-2 dark:text-white">Modo Claro</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between"><label for="light-bg-general" class="dark:text-gray-300">Fondo General</label><input type="color" id="light-bg-general" value="#e5e7eb"></div>
+                                <div class="flex items-center justify-between"><label for="light-bg-content" class="dark:text-gray-300">Fondo Contenido</label><input type="color" id="light-bg-content" value="#ffffff"></div>
+                                <div class="flex items-center justify-between"><label for="light-text-main" class="dark:text-gray-300">Texto Principal</label><input type="color" id="light-text-main" value="#111827"></div>
+                                <div class="flex items-center justify-between"><label for="light-card-bg" class="dark:text-gray-300">Fondo Tarjeta</label><input type="color" id="light-card-bg" value="#ffffff"></div>
+                                <div class="flex items-center justify-between"><label for="light-card-text-main" class="dark:text-gray-300">Texto Tarjeta (Principal)</label><input type="color" id="light-card-text-main" value="#111827"></div>
+                                <div class="flex items-center justify-between"><label for="light-card-text-secondary" class="dark:text-gray-300">Texto Tarjeta (Secundario)</label><input type="color" id="light-card-text-secondary" value="#6b7280"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 border-b pb-2 dark:text-white">Modo Oscuro</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between"><label for="dark-bg-general" class="dark:text-gray-300">Fondo General</label><input type="color" id="dark-bg-general" value="#0d1117"></div>
+                                <div class="flex items-center justify-between"><label for="dark-bg-content" class="dark:text-gray-300">Fondo Contenido</label><input type="color" id="dark-bg-content" value="#161b22"></div>
+                                <div class="flex items-center justify-between"><label for="dark-text-main" class="dark:text-gray-300">Texto Principal</label><input type="color" id="dark-text-main" value="#f0f6fc"></div>
+                                <div class="flex items-center justify-between"><label for="dark-card-bg" class="dark:text-gray-300">Fondo Tarjeta</label><input type="color" id="dark-card-bg" value="#21262d"></div>
+                                <div class="flex items-center justify-between"><label for="dark-card-text-main" class="dark:text-gray-300">Texto Tarjeta (Principal)</label><input type="color" id="dark-card-text-main" value="#f0f6fc"></div>
+                                <div class="flex items-center justify-between"><label for="dark-card-text-secondary" class="dark:text-gray-300">Texto Tarjeta (Secundario)</label><input type="color" id="dark-card-text-secondary" value="#8b949e"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-between mt-8">
+                    <button type="button" id="resetThemeBtn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl hover:bg-gray-600 relief-button">Restaurar por Defecto</button>
+                    <button type="button" id="saveThemeBtn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl hover:bg-indigo-700 relief-button">Guardar Apariencia</button>
+                </div>
+            </div>
+            <div id="colors-panel" class="hidden">
+                <p class="text-sm text-gray-500 mb-6">Personaliza los colores de fondo para cada tipo de beneficio.</p>
+                <div id="color-settings-container" class="space-y-4 max-h-60 overflow-y-auto pr-2"></div>
+                <div class="flex justify-between mt-8">
+                    <button type="button" id="resetColorsBtn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-xl hover:bg-gray-600 relief-button">Restaurar</button>
+                    <button type="button" id="saveColorsBtn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl hover:bg-indigo-700 relief-button">Guardar Colores</button>
+                </div>
+            </div>
+            <div id="password-panel" class="hidden">
+                <p class="text-sm text-gray-500 mb-6">Para cambiar la contraseña de administrador, ingresa la actual y luego la nueva.</p>
+                <form id="passwordChangeForm" class="space-y-4">
+                    <div>
+                        <label for="currentPassword" class="block text-sm font-medium dark:text-gray-300">Contraseña Actual</label>
+                        <input type="password" id="currentPassword" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                    </div>
+                    <div>
+                        <label for="newPassword" class="block text-sm font-medium dark:text-gray-300">Nueva Contraseña</label>
+                        <input type="password" id="newPassword" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                    </div>
+                    <div>
+                        <label for="confirmPassword" class="block text-sm font-medium dark:text-gray-300">Confirmar Nueva Contraseña</label>
+                        <input type="password" id="confirmPassword" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                    </div>
+                    <div class="flex justify-end pt-4">
+                        <button type="submit" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-xl hover:bg-indigo-700 relief-button">Cambiar Contraseña</button>
+                    </div>
+                </form>
+            </div>
+            <div class="flex justify-end mt-4">
+                <button type="button" id="cancelSettingsBtn" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-xl hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 relief-button">Cerrar</button>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="text-center py-8 mt-8 border-t border-gray-200 dark:border-gray-700">
+        <p class="text-sm text-gray-500">Creado por RBM 2025</p>
+    </footer>
+<script>
+// ----------- CONFIGURACIÓN -----------
+const googleWebAppUrl = 'https://script.google.com/macros/s/AKfycbz3CwHl2wJAIUXEozKw783yT8HiDSiSZWHezweXEG1NjQc2QsQ-EvEqUtU8wXO1T7yW/exec';
+const PASSWORD = '454545';
+const KANBAN_COLUMNS = [
+    { status: 'Ingresado', color: 'bg-gray-300', textColor: 'text-gray-800' },
+    { status: 'En Gabinete', color: 'bg-yellow-300', textColor: 'text-yellow-800' },
+    { status: 'Regreso', color: 'bg-cyan-300', textColor: 'text-cyan-800' },
+    { status: 'Fiscalía', color: 'bg-orange-300', textColor: 'text-orange-800' },
+    { status: 'Defensoría', color: 'bg-teal-300', textColor: 'text-teal-800' },
+    { status: 'Para Despacho', color: 'bg-blue-300', textColor: 'text-blue-800' },
+    { status: 'Finalizado', color: 'bg-green-300', textColor: 'text-green-800' }
+];
+// -----------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+    // --- ESTADO GLOBAL ---
+    let allData = { legajos: [], sentencias: [], beneficios: [], tramitesVarios: [] };
+    let archivedCasesData = [];
+    let isAuthenticated = false;
+    let benefitsChart = null;
+    let currentLegajoId = null;
+    let caseIdToFinalize = null;
+    let caseIdToArchive = null;
+    let caseIdToDelete = null;
+
+    const DEFAULT_BENEFIT_COLORS = {
+        'Salidas Transitorias': '#dbeafe', 'Prisión Domiciliaria': '#d1fae5',
+        'Estímulo Educativo': '#e9d5ff', 'Libertad Asistida': '#ccfbf1',
+        'Libertad Condicional': '#e0e7ff', 'Régimen Preparatorio': '#fce7f3',
+        'Otro': '#f3f4f6'
+    };
+    let benefitColors = { ...DEFAULT_BENEFIT_COLORS };
+    const DEFAULT_THEME_COLORS = {
+        '--light-bg-general': '#e5e7eb', '--light-bg-content': '#ffffff', '--light-text-main': '#111827',
+        '--light-card-bg': '#ffffff', '--light-card-text-main': '#111827', '--light-card-text-secondary': '#6b7280',
+        '--dark-bg-general': '#0d1117', '--dark-bg-content': '#161b22', '--dark-text-main': '#f0f6fc',
+        '--dark-card-bg': '#21262d', '--dark-card-text-main': '#f0f6fc', '--dark-card-text-secondary': '#8b949e'
+    };
+    
+    // --- SELECTORES ---
+    const viewLegajos = document.getElementById('view-legajos');
+    const viewBeneficios = document.getElementById('view-beneficios');
+    const navLegajos = document.getElementById('nav-legajos');
+    const navBeneficios = document.getElementById('nav-beneficios');
+    const viewTitle = document.getElementById('view-title');
+    const legajosTableBody = document.getElementById('legajosTableBody');
+    const kanbanBoard = document.getElementById('kanban-board');
+    const legajosLoader = document.getElementById('legajosLoader');
+    const beneficiosLoader = document.getElementById('beneficiosLoader');
+    const addSentenceBtn = document.getElementById('addSentenceBtn');
+    const ingresarSentenciaModal = document.getElementById('ingresarSentenciaModal');
+    const cancelIngresoBtn = document.getElementById('cancelIngresoBtn');
+    const legajoDetailModal = document.getElementById('legajoDetailModal');
+    const closeDetailBtn = document.getElementById('closeDetailBtn');
+    const authBtn = document.getElementById('authBtn');
+    const addCaseBtn = document.querySelector('#view-beneficios #addCaseBtn');
+    const caseModal = document.getElementById('caseModal');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const caseForm = document.getElementById('caseForm');
+    const loginModal = document.getElementById('loginModal');
+    const loginForm = document.getElementById('loginForm');
+    const cancelLoginBtn = document.getElementById('cancelLoginBtn');
+    const headerSubtitle = document.getElementById('header-subtitle');
+    const ingresarSentenciaForm = document.getElementById('ingresarSentenciaForm');
+    const searchInternoInput = document.getElementById('searchInternoInput');
+    const searchResults = document.getElementById('searchResults');
+    const createNewLegajoBtn = document.getElementById('createNewLegajoBtn');
+    const wizardStep1 = document.getElementById('wizard-step-1');
+    const wizardStep2 = document.getElementById('wizard-step-2');
+    const wizardHeader = document.getElementById('wizard-header');
+    const newLegajoFields = document.getElementById('new-legajo-fields');
+    const existingLegajoIdInput = document.getElementById('existingLegajoId');
+    const submitSentenciaBtn = document.getElementById('submitSentenciaBtn');
+    const computoButtonsContainer = document.getElementById('computo-buttons-container');
+    const themeToggleBtn = document.getElementById('mainThemeToggle');
+    const themeToggleDarkIcon = document.getElementById('main-theme-toggle-dark-icon');
+    const themeToggleLightIcon = document.getElementById('main-theme-toggle-light-icon');
+    const settingsBtn = document.getElementById('mainSettingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
+    const addBeneficioBtn = document.getElementById('addBeneficioBtn');
+    const addTramiteBtn = document.getElementById('addTramiteBtn');
+    const chartContainer = document.getElementById('chart-container');
+    const deleteModal = document.getElementById('deleteConfirmationModal');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const archiveModal = document.getElementById('archiveConfirmationModal');
+    const cancelArchiveBtn = document.getElementById('cancelArchiveBtn');
+    const confirmArchiveBtn = document.getElementById('confirmArchiveBtn');
+    const archiveViewModal = document.getElementById('archiveViewModal');
+    const closeArchiveViewBtn = document.getElementById('closeArchiveViewBtn');
+    const archiveSearchInput = document.getElementById('archiveSearchInput');
+    const archiveTableBody = document.getElementById('archiveTableBody');
+    const archiveViewBtn = document.querySelector('#view-beneficios header button[title="Ver Archivados"]');
+    const alertModal = document.getElementById('alertModal');
+    const alertTitle = document.getElementById('alertTitle');
+    const alertMessage = document.getElementById('alertMessage');
+    const closeAlertBtn = document.getElementById('closeAlertBtn');
+    const finalizeModal = document.getElementById('finalizeModal');
+    const finalizeForm = document.getElementById('finalizeForm');
+    const cancelFinalizeBtn = document.getElementById('cancelFinalizeBtn');
+    const finalizeCaseId = document.getElementById('finalizeCaseId');
+    const appearanceTab = document.getElementById('appearance-tab');
+    const colorsTab = document.getElementById('colors-tab');
+    const passwordTab = document.getElementById('password-tab');
+    const appearancePanel = document.getElementById('appearance-panel');
+    const colorsPanel = document.getElementById('colors-panel');
+    const passwordPanel = document.getElementById('password-panel');
+    const passwordChangeForm = document.getElementById('passwordChangeForm');
+    const saveColorsBtn = document.getElementById('saveColorsBtn');
+    const resetColorsBtn = document.getElementById('resetColorsBtn');
+    const colorSettingsContainer = document.getElementById('color-settings-container');
+    const saveThemeBtn = document.getElementById('saveThemeBtn');
+    const resetThemeBtn = document.getElementById('resetThemeBtn');
+    const alarmToggle = document.querySelector('#view-beneficios header #alarmToggle');
+    const stateDateContainer = document.getElementById('stateDateContainer');
+    const stateDateEditLabel = document.getElementById('stateDateEditLabel');
+    const stateDateEdit = document.getElementById('stateDateEdit');
+    const stateDateField = document.getElementById('stateDateField');
+    
+    // --- NAVEGACIÓN ---
+    function showView(viewName) {
+        viewLegajos.classList.add('hidden');
+        viewBeneficios.classList.add('hidden');
+        navLegajos.classList.remove('active');
+        navBeneficios.classList.remove('active');
+
+        if (viewName === 'legajos') {
+            viewLegajos.classList.remove('hidden');
+            navLegajos.classList.add('active');
+            viewTitle.textContent = 'Dashboard de Legajos';
+        } else if (viewName === 'beneficios') {
+            viewBeneficios.classList.remove('hidden');
+            navBeneficios.classList.add('active');
+            viewTitle.textContent = 'Monitor de Beneficios';
+        }
+    }
+
+    navLegajos.addEventListener('click', () => showView('legajos'));
+    navBeneficios.addEventListener('click', () => showView('beneficios'));
+
+    // --- DATOS ---
+    async function fetchData() {
+        setConnectionStatus('connecting');
+        legajosLoader.style.display = 'block';
+        beneficiosLoader.style.display = 'block';
+        kanbanBoard.style.display = 'none';
+        chartContainer.style.display = 'none';
+        try {
+            const response = await fetch(googleWebAppUrl);
+            if (!response.ok) throw new Error(`Error de Red (${response.status})`);
+            const data = await response.json();
+            if (data.status === 'error') throw new Error(`Error en Script: ${data.message}`);
+            allData = data;
+            renderLegajosTable(allData.legajos);
+            renderBoard(allData.beneficios);
+            updateDashboard(allData.beneficios);
+            setConnectionStatus('connected');
+        } catch (error) {
+            console.error('Error al obtener datos:', error);
+            setConnectionStatus('error', 'Fallo de conexión');
+            legajosLoader.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+            beneficiosLoader.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+        } finally {
+            legajosLoader.style.display = 'none';
+            beneficiosLoader.style.display = 'none';
+            kanbanBoard.style.display = 'block';
+            chartContainer.style.display = 'block';
+        }
+    }
+    
+    async function fetchArchivedData() {
+        try {
+            const response = await fetch(`${googleWebAppUrl}?action=getArchived`);
+            if (!response.ok) throw new Error(`Error de Red (${response.status})`);
+            const data = await response.json();
+            if (data.status === 'error') throw new Error(`Error en Script: ${data.message}`);
+            archivedCasesData = data;
+            renderArchiveTable(archivedCasesData);
+        } catch (error) {
+            console.error('Error al obtener datos archivados:', error);
+            archiveTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-red-500">No se pudieron cargar los archivos.</td></tr>`;
+        }
+    }
+
+    async function postData(payload) {
+        if (!isAuthenticated) {
+            showAlert('Acción no permitida', 'Debes iniciar sesión para realizar cambios.');
+            return;
+        }
+        setConnectionStatus('connecting', 'Guardando...');
+        try {
+            await fetch(googleWebAppUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ ...payload, password: PASSWORD }),
+            });
+            setTimeout(fetchData, 1500);
+        } catch (error) {
+            console.error('Error al enviar datos:', error);
+            setConnectionStatus('error', 'Fallo al guardar');
+        }
+    }
+
+    // --- RENDERIZADO ---
+    function renderLegajosTable(legajos) {
+        legajosTableBody.innerHTML = '';
+        if (!legajos || legajos.length === 0) {
+            legajosTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-4">No se encontraron legajos.</td></tr>`;
+            return;
+        }
+        legajos.forEach(legajo => {
+            const row = document.createElement('tr');
+            row.className = 'bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer';
+            row.dataset.legajoId = legajo.id_legajo;
+            row.innerHTML = `
+                <td class="px-6 py-4 font-mono">${legajo.id_legajo}</td>
+                <td class="px-6 py-4">${legajo.nro_prontuario}</td>
+                <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">${legajo.nombre_completo}</td>
+                <td class="px-6 py-4">${legajo.defensor_actual || 'N/A'}</td>
+                <td class="px-6 py-4"><span class="font-semibold">${legajo.estado_computo}</span></td>
+                <td class="px-6 py-4">${legajo.fecha_fin_condena ? new Date(legajo.fecha_fin_condena).toLocaleDateString() : 'N/A'}</td>
             `;
-        }).join('');
+            row.addEventListener('click', () => openLegajoDetail(legajo.id_legajo));
+            legajosTableBody.appendChild(row);
+        });
     }
 
-    // --- Funciones de UI Auxiliares ---
-    function showView(viewId) {
-        document.getElementById('dashboard-view').classList.add('hidden');
-        document.getElementById('legajo-detail-view').classList.add('hidden');
-        document.getElementById(viewId).classList.remove('hidden');
+    function initializeBoard() {
+        kanbanBoard.innerHTML = '';
+        const topRow = document.createElement('div');
+        topRow.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6';
+        const bottomRow = document.createElement('div');
+        bottomRow.className = 'mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6';
+        KANBAN_COLUMNS.forEach((col, index) => {
+            const columnEl = document.createElement('div');
+            columnEl.className = 'rounded-xl p-4 kanban-column relief-border';
+            columnEl.dataset.status = col.status;
+            columnEl.innerHTML = `<h2 class="font-bold text-lg mb-4 flex justify-between items-center dark:text-white">${col.status}<span id="count-${col.status.toLowerCase().replace(/ /g, '-')}" class="text-sm ${col.color} ${col.textColor} rounded-full px-2 py-0.5">0</span></h2><div class="space-y-4 card-container"></div>`;
+            if (index < 4) topRow.appendChild(columnEl);
+            else bottomRow.appendChild(columnEl);
+        });
+        kanbanBoard.appendChild(topRow);
+        kanbanBoard.appendChild(bottomRow);
     }
 
-    function openModal(modalId) { document.getElementById(modalId).style.display = 'block'; }
-    function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+    function renderBoard(beneficios) {
+        document.querySelectorAll('.card-container').forEach(c => c.innerHTML = '');
+        KANBAN_COLUMNS.forEach(col => updateColumnCounter(col.status, 0, true));
+        const validStatuses = KANBAN_COLUMNS.map(col => col.status);
+        if (Array.isArray(beneficios)) {
+            const visibleBeneficios = beneficios.filter(item => validStatuses.includes(item.estado));
+            visibleBeneficios.forEach(caseItem => {
+                const card = createCardElement(caseItem);
+                const columnContainer = kanbanBoard.querySelector(`.kanban-column[data-status="${caseItem.estado}"] .card-container`);
+                if (columnContainer) {
+                    columnContainer.appendChild(card);
+                    updateColumnCounter(caseItem.estado, 1);
+                }
+            });
+        }
+        if (isAuthenticated) setupDragAndDrop();
+    }
 
+    function createCardElement(caseItem) {
+        const card = document.createElement('div');
+        card.className = 'kanban-card p-4 rounded-xl relief-border';
+        card.dataset.id = caseItem.id_beneficio_legajo;
+        const bgColor = benefitColors[caseItem.beneficio] || benefitColors['Otro'];
+        const textColor = getContrastColor(bgColor);
+        const displayDate = caseItem.fechaIngreso ? new Date(caseItem.fechaIngreso).toLocaleDateString() : 'N/A';
+        
+        const statusDateMap = {
+            'Fiscalía': { field: 'fechaEnvioFiscalia', label: 'Fiscalía' },
+            'Defensoría': { field: 'fechaEnvioDefensoria', label: 'Defensoría' },
+            'En Gabinete': { field: 'fechaEnvioGabinete', label: 'En Gabinete' },
+            'Regreso': { field: 'fechaRegresoGabinete', label: 'Regreso' },
+            'Para Despacho': { field: 'fechaDespacho', label: 'Para Despacho' },
+            'Finalizado': { field: 'fechaFinalizado', label: 'Finalizado' }
+        };
+        let stateDateHTML = '';
+        const statusInfo = statusDateMap[caseItem.estado];
+        if (statusInfo) {
+            const stateDateValue = caseItem[statusInfo.field];
+            if (stateDateValue) {
+                stateDateHTML = `<div class="mt-1">${statusInfo.label}: ${new Date(stateDateValue).toLocaleDateString()}</div>`;
+            }
+        }
+
+        let actionButtonsHTML = '';
+        if (isAuthenticated) {
+            if (caseItem.estado === 'Finalizado') {
+                actionButtonsHTML += `<button class="action-btn archive-btn text-gray-400 dark:text-gray-500" data-id="${caseItem.id_beneficio_legajo}" title="Archivar"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" /><path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd" /></svg></button>`;
+            }
+            actionButtonsHTML += `<button class="action-btn delete-btn text-gray-400 dark:text-gray-500" data-id="${caseItem.id_beneficio_legajo}" title="Eliminar"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>`;
+        }
+        
+        card.innerHTML = `
+            ${actionButtonsHTML}
+            <div class="font-bold text-lg card-text-main">${caseItem.expediente || 'S/N'}</div>
+            <div class="text-sm mb-2 card-text-secondary">${caseItem.interno || 'S/N'}</div>
+            <div class="benefit-tag text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full" style="background-color: ${bgColor}; color: ${textColor};">${caseItem.beneficio || 'Otro'}</div>
+            <div class="text-xs mt-2 card-dates card-text-secondary">
+                <div>Ingreso: ${displayDate}</div>
+                ${stateDateHTML}
+            </div>
+        `;
+        
+        if (caseItem.estado === 'En Gabinete' && caseItem.fechaEnvioGabinete) {
+            const daysInState = (new Date() - new Date(caseItem.fechaEnvioGabinete)) / (1000 * 3600 * 24);
+            if (daysInState > 7) card.classList.add('alarm');
+        }
+
+        if (isAuthenticated) {
+            card.classList.add('editable', 'draggable');
+            card.draggable = true;
+            card.addEventListener('click', () => openEditModal(caseItem));
+            card.querySelector('.delete-btn')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                caseIdToDelete = e.currentTarget.dataset.id;
+                deleteModal.style.display = 'flex';
+            });
+            card.querySelector('.archive-btn')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                caseIdToArchive = e.currentTarget.dataset.id;
+                archiveModal.style.display = 'flex';
+            });
+        }
+        return card;
+    }
+
+    function setupDragAndDrop() {
+        const cards = document.querySelectorAll('.draggable');
+        const columns = document.querySelectorAll('.kanban-column');
+        cards.forEach(card => {
+            card.addEventListener('dragstart', () => card.classList.add('dragging'));
+            card.addEventListener('dragend', () => card.classList.remove('dragging'));
+        });
+        columns.forEach(column => {
+            column.addEventListener('dragover', e => { e.preventDefault(); if (document.querySelector('.dragging')) column.classList.add('drag-over'); });
+            column.addEventListener('dragleave', () => column.classList.remove('drag-over'));
+            column.addEventListener('drop', e => {
+                e.preventDefault();
+                column.classList.remove('drag-over');
+                const draggingCard = document.querySelector('.dragging');
+                if (draggingCard) {
+                    const cardId = draggingCard.dataset.id;
+                    const newStatus = column.dataset.status;
+                    const oldStatus = draggingCard.closest('.kanban-column').dataset.status;
+                    if (oldStatus !== newStatus) {
+                        if (newStatus === 'Finalizado') {
+                            caseIdToFinalize = cardId;
+                            finalizeModal.style.display = 'flex';
+                            return; 
+                        }
+                        column.querySelector('.card-container').appendChild(draggingCard);
+                        updateColumnCounter(oldStatus, -1);
+                        updateColumnCounter(newStatus, 1);
+                        postData({ action: 'updateBeneficioStatus', id: cardId, newStatus });
+                    }
+                }
+            });
+        });
+    }
+
+    function updateDashboard(data) {
+        if (!Array.isArray(data)) return;
+        const activeCases = data.filter(c => c.estado !== 'Finalizado' && c.estado !== 'Archivado');
+        document.getElementById('total-activos').textContent = activeCases.length;
+        const casesInGabinete = data.filter(c => c.fechaEnvioGabinete && c.fechaRegresoGabinete);
+        if(casesInGabinete.length > 0) {
+            const totalTime = casesInGabinete.reduce((acc, c) => acc + (Math.abs(new Date(c.fechaRegresoGabinete) - new Date(c.fechaEnvioGabinete)) / (1000 * 3600 * 24)), 0);
+            document.getElementById('avg-time').textContent = `${(totalTime / casesInGabinete.length).toFixed(1)} días`;
+        } else {
+            document.getElementById('avg-time').textContent = 'N/A';
+        }
+        const benefitCounts = activeCases.reduce((acc, c) => { acc[c.beneficio || 'Otro'] = (acc[c.beneficio || 'Otro'] || 0) + 1; return acc; }, {});
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        if (benefitsChart) benefitsChart.destroy();
+        benefitsChart = new Chart(document.getElementById('benefitsChart').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: Object.keys(benefitCounts),
+                datasets: [{ data: Object.values(benefitCounts), backgroundColor: Object.keys(benefitCounts).map(label => benefitColors[label] || benefitColors['Otro']), borderColor: isDarkMode ? 'var(--dark-bg-general)' : 'var(--light-bg-general)', borderWidth: 3 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: isDarkMode ? '#d1d5db' : '#4b5563' } } } }
+        });
+    }
+
+    function updateColumnCounter(status, change, reset = false) {
+        const counterId = `count-${status.toLowerCase().replace(/ /g, '-')}`;
+        const counterElement = document.getElementById(counterId);
+        if (counterElement) {
+            counterElement.textContent = reset ? '0' : parseInt(counterElement.textContent) + change;
+        }
+    }
+
+    // --- MODALES ---
+    function openLegajoDetail(legajoId) {
+        currentLegajoId = legajoId;
+        const legajo = allData.legajos.find(l => l.id_legajo === legajoId);
+        if (!legajo) return;
+
+        document.getElementById('detail-id_legajo').textContent = legajo.id_legajo;
+        document.getElementById('detail-nombre_completo').textContent = legajo.nombre_completo;
+        document.getElementById('detail-nro_prontuario').textContent = legajo.nro_prontuario;
+        document.getElementById('detail-fecha_fin_condena').textContent = legajo.fecha_fin_condena ? new Date(legajo.fecha_fin_condena).toLocaleDateString() : 'N/A';
+        document.getElementById('detail-defensor_actual').textContent = legajo.defensor_actual || 'Pendiente';
+        document.getElementById('detail-fiscal_actual').textContent = legajo.fiscal_actual || 'N/A';
+        document.getElementById('detail-estado_computo').textContent = legajo.estado_computo;
+
+        const sentenciasList = document.getElementById('detail-sentencias-list');
+        sentenciasList.innerHTML = '';
+        (allData.sentencias.filter(s => s.id_legajo === legajoId) || []).forEach(s => {
+            sentenciasList.innerHTML += `<div class="p-2 border-b">${s.nro_causa} - ${s.delito} (${new Date(s.fecha_sentencia).toLocaleDateString()})</div>`;
+        });
+
+        const beneficiosList = document.getElementById('detail-beneficios-list');
+        beneficiosList.innerHTML = '';
+         (allData.beneficios.filter(b => b.id_legajo === legajoId) || []).forEach(b => {
+            beneficiosList.innerHTML += `<div class="p-2 border-b">${b.expediente} - ${b.beneficio} (Estado: ${b.estado})</div>`;
+        });
+
+        const tramitesList = document.getElementById('detail-tramites-list');
+        tramitesList.innerHTML = '';
+        (allData.tramitesVarios.filter(t => t.id_legajo === legajoId) || []).forEach(t => {
+            tramitesList.innerHTML += `<div class="p-2 border-b">${t.tipo_tramite} - ${t.descripcion} (Estado: ${t.estado})</div>`;
+        });
+        
+        styleComputoButtons(legajo.estado_computo);
+        updateAuthStateUI();
+        legajoDetailModal.style.display = 'flex';
+        showTab('tab-computo');
+    }
+
+    function openEditModal(caseItem) {
+        document.getElementById('modalTitle').textContent = 'Editar Trámite';
+        caseForm.reset();
+        document.getElementById('caseId').value = caseItem.id_beneficio_legajo || '';
+        document.getElementById('expediente').value = caseItem.expediente || '';
+        document.getElementById('interno').value = caseItem.interno || '';
+        document.getElementById('beneficio').value = caseItem.beneficio || 'Otro';
+        
+        if (caseItem.fechaIngreso) {
+            document.getElementById('fechaIngreso').value = new Date(caseItem.fechaIngreso).toISOString().split('T')[0];
+        }
+        
+        const statusDateMap = {
+            'Fiscalía': { field: 'fechaEnvioFiscalia', label: 'Fecha de Envío a Fiscalía' },
+            'Defensoría': { field: 'fechaEnvioDefensoria', label: 'Fecha de Envío a Defensoría' },
+            'En Gabinete': { field: 'fechaEnvioGabinete', label: 'Fecha de Envío a Gabinete' },
+            'Regreso': { field: 'fechaRegresoGabinete', label: 'Fecha de Regreso de Gabinete' },
+            'Para Despacho': { field: 'fechaDespacho', label: 'Fecha para Despacho' },
+            'Finalizado': { field: 'fechaFinalizado', label: 'Fecha de Finalización' }
+        };
+
+        const statusInfo = statusDateMap[caseItem.estado];
+        if (statusInfo) {
+            stateDateContainer.classList.remove('hidden');
+            stateDateEditLabel.textContent = statusInfo.label;
+            stateDateField.value = statusInfo.field;
+            if (caseItem[statusInfo.field]) {
+                stateDateEdit.value = new Date(caseItem[statusInfo.field]).toISOString().split('T')[0];
+            }
+        } else {
+            stateDateContainer.classList.add('hidden');
+        }
+
+        const finalizeFieldsContainer = document.getElementById('finalizeFieldsContainer');
+        if (caseItem.estado === 'Finalizado') {
+            finalizeFieldsContainer.classList.remove('hidden');
+            document.getElementById('motivoFinalizadoEdit').value = caseItem.motivoFinalizado || '';
+            document.getElementById('enlaceResolucionEdit').value = caseItem.enlaceResolucion || '';
+        } else {
+            finalizeFieldsContainer.classList.add('hidden');
+        }
+        caseModal.style.display = 'flex';
+    }
+    
+    // --- AUTENTICACIÓN ---
+    function updateAuthStateUI() {
+        const editButtons = document.querySelectorAll('.edit-field-btn');
+        if (isAuthenticated) {
+            if(addSentenceBtn) addSentenceBtn.classList.remove('hidden');
+            if(addCaseBtn) addCaseBtn.classList.remove('hidden');
+            if(authBtn) {
+                authBtn.textContent = 'Cerrar Sesión';
+                authBtn.classList.replace('bg-green-600', 'bg-red-600');
+            }
+            if(headerSubtitle) headerSubtitle.textContent = 'Modo de edición activado.';
+            editButtons.forEach(btn => btn.classList.remove('hidden'));
+        } else {
+            if(addSentenceBtn) addSentenceBtn.classList.add('hidden');
+            if(addCaseBtn) addCaseBtn.classList.add('hidden');
+            if(authBtn) {
+                authBtn.textContent = 'Iniciar Sesión';
+                authBtn.classList.replace('bg-red-600', 'bg-green-600');
+            }
+            if(headerSubtitle) headerSubtitle.textContent = 'Modo de solo lectura.';
+            editButtons.forEach(btn => btn.classList.add('hidden'));
+        }
+        renderBoard(allData.beneficios);
+    }
+
+    authBtn.addEventListener('click', () => {
+        if (isAuthenticated) {
+            isAuthenticated = false;
+            updateAuthStateUI();
+        } else {
+            loginModal.style.display = 'flex';
+        }
+    });
+
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (loginForm.querySelector('#password').value === PASSWORD) {
+            isAuthenticated = true;
+            loginModal.style.display = 'none';
+            updateAuthStateUI();
+        } else {
+            alert('Contraseña incorrecta');
+        }
+    });
+    cancelLoginBtn.addEventListener('click', () => loginModal.style.display = 'none');
+
+    // --- EVENTOS ---
+    function resetSentenciaModal() {
+        ingresarSentenciaForm.reset();
+        wizardStep1.classList.remove('hidden');
+        wizardStep2.classList.add('hidden');
+        newLegajoFields.classList.add('hidden');
+        submitSentenciaBtn.classList.add('hidden');
+        searchResults.innerHTML = '';
+        existingLegajoIdInput.value = '';
+    }
+
+    addSentenceBtn.addEventListener('click', () => {
+        resetSentenciaModal();
+        ingresarSentenciaModal.style.display = 'flex';
+    });
+    cancelIngresoBtn.addEventListener('click', () => ingresarSentenciaModal.style.display = 'none');
+    closeDetailBtn.addEventListener('click', () => legajoDetailModal.style.display = 'none');
+    
+    caseForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(caseForm);
+        const payload = Object.fromEntries(formData.entries());
+        
+        if (payload.caseId) {
+            payload.action = 'updateCase';
+            await postData(payload);
+            if (payload.stateDateField && payload.stateDateEdit) {
+                 await postData({
+                    action: 'updateStateDate',
+                    id: payload.caseId,
+                    dateField: payload.stateDateField,
+                    newDate: payload.stateDateEdit
+                });
+            }
+        } else {
+            payload.action = 'addBeneficio';
+            await postData(payload);
+        }
+        caseModal.style.display = 'none';
+    });
+    cancelBtn.addEventListener('click', () => caseModal.style.display = 'none');
+    
+    function showTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+        document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
+        document.getElementById(tabId).classList.remove('hidden');
+        document.querySelector(`.tab-link[data-tab="${tabId}"]`).classList.add('active');
+    }
+
+    legajoDetailModal.addEventListener('click', (e) => {
+        if (e.target.matches('.tab-link')) {
+            showTab(e.target.dataset.tab);
+        }
+    });
+
+    searchInternoInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        searchResults.innerHTML = '';
+        if (searchTerm.length < 3) return;
+        const filteredLegajos = allData.legajos.filter(l => 
+            l.nombre_completo.toLowerCase().includes(searchTerm) || 
+            l.nro_prontuario.toLowerCase().includes(searchTerm)
+        );
+        filteredLegajos.forEach(legajo => {
+            const div = document.createElement('div');
+            div.className = 'p-2 hover:bg-gray-100 cursor-pointer border-b';
+            div.textContent = `${legajo.nombre_completo} (Pront: ${legajo.nro_prontuario})`;
+            div.addEventListener('click', () => {
+                wizardHeader.textContent = `Agregando sentencia a: ${legajo.nombre_completo}`;
+                existingLegajoIdInput.value = legajo.id_legajo;
+                newLegajoFields.classList.add('hidden');
+                wizardStep1.classList.add('hidden');
+                wizardStep2.classList.remove('hidden');
+                submitSentenciaBtn.classList.remove('hidden');
+            });
+            searchResults.appendChild(div);
+        });
+    });
+
+    createNewLegajoBtn.addEventListener('click', () => {
+        wizardHeader.textContent = 'Creando nuevo legajo y sentencia';
+        existingLegajoIdInput.value = '';
+        newLegajoFields.classList.remove('hidden');
+        wizardStep1.classList.add('hidden');
+        wizardStep2.classList.remove('hidden');
+        submitSentenciaBtn.classList.remove('hidden');
+    });
+
+    ingresarSentenciaForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const formData = new FormData(ingresarSentenciaForm);
+        const payload = Object.fromEntries(formData.entries());
+        payload.es_unificada = formData.has('es_unificada');
+        payload.action = payload.id_legajo ? 'addSentencia' : 'addLegajoYsentencia';
+        postData(payload);
+        ingresarSentenciaModal.style.display = 'none';
+    });
+
+    computoButtonsContainer.addEventListener('click', (e) => {
+        const button = e.target.closest('button[data-action="updateComputo"]');
+        if (button) {
+            const nuevoEstado = button.dataset.estado;
+            if (!isAuthenticated) {
+                showAlert("Autenticación Requerida", "Debe iniciar sesión para poder cambiar el estado del cómputo.");
+                return;
+            }
+            if (!currentLegajoId) return;
+
+            if (nuevoEstado === 'Aprobado') {
+                const linkComputo = prompt("Por favor, ingrese el enlace al Auto de Aprobación de Cómputo:");
+                if (linkComputo !== null) { 
+                    const payload = { 
+                        action: 'updateComputoEstado', 
+                        id_legajo: currentLegajoId, 
+                        nuevoEstado: nuevoEstado,
+                        link_computo: linkComputo
+                    };
+                    postData(payload);
+                    document.getElementById('detail-estado_computo').textContent = nuevoEstado;
+                    styleComputoButtons(nuevoEstado);
+                } else {
+                    showAlert("Acción Cancelada", "No se aprobó el cómputo.");
+                }
+            } else {
+                const payload = { 
+                    action: 'updateComputoEstado', 
+                    id_legajo: currentLegajoId, 
+                    nuevoEstado: nuevoEstado 
+                };
+                postData(payload);
+                document.getElementById('detail-estado_computo').textContent = nuevoEstado;
+                styleComputoButtons(nuevoEstado);
+            }
+        }
+    });
+
+    legajoDetailModal.addEventListener('click', (e) => {
+        const button = e.target.closest('.edit-field-btn');
+        if (button) {
+            if (!isAuthenticated) return;
+            if (legajoDetailModal.querySelector('.inline-edit-wrapper')) return;
+
+            const field = button.dataset.field;
+            const container = button.parentElement;
+            const span = container.querySelector('span:last-of-type');
+            
+            const currentValue = span.textContent;
+            
+            span.style.display = 'none';
+            button.style.display = 'none';
+
+            document.querySelectorAll('.edit-field-btn').forEach(btn => {
+                if(btn !== button) btn.disabled = true;
+            });
+
+            const editWrapper = document.createElement('div');
+            editWrapper.className = 'inline-edit-wrapper flex items-center';
+
+            const input = document.createElement('input');
+            input.className = 'border rounded-md px-2 py-1 text-sm dark:bg-gray-700';
+            
+            if (field === 'fecha_fin_condena') {
+                input.type = 'date';
+                if (currentValue !== 'N/A') {
+                    const parts = currentValue.split('/');
+                    input.value = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                }
+            } else {
+                input.type = 'text';
+                input.value = currentValue;
+            }
+
+            const saveBtn = document.createElement('button');
+            saveBtn.textContent = '✓';
+            saveBtn.className = 'ml-2 text-xs bg-green-500 text-white px-2 py-1 rounded-md';
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = '✗';
+            cancelBtn.className = 'ml-1 text-xs bg-gray-500 text-white px-2 py-1 rounded-md';
+
+            editWrapper.appendChild(input);
+            editWrapper.appendChild(saveBtn);
+            editWrapper.appendChild(cancelBtn);
+            container.appendChild(editWrapper);
+            input.focus();
+
+            const removeEditControls = () => {
+                container.removeChild(editWrapper);
+                span.style.display = '';
+                button.style.display = '';
+                document.querySelectorAll('.edit-field-btn').forEach(btn => btn.disabled = false);
+            };
+
+            saveBtn.onclick = () => {
+                const newValue = input.value;
+                if (newValue !== currentValue) {
+                    postData({ action: 'updateLegajoField', id_legajo: currentLegajoId, field: field, value: newValue });
+                    if (field === 'fecha_fin_condena' && newValue) {
+                        const parts = newValue.split('-');
+                        span.textContent = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    } else {
+                        span.textContent = newValue || 'N/A';
+                    }
+                }
+                removeEditControls();
+            };
+
+            cancelBtn.onclick = () => {
+                removeEditControls();
+            };
+        }
+    });
+
+    addBeneficioBtn.addEventListener('click', () => {
+        if (!isAuthenticated || !currentLegajoId) return;
+        const legajo = allData.legajos.find(l => l.id_legajo === currentLegajoId);
+        caseForm.reset();
+        document.getElementById('modalTitle').textContent = 'Nuevo Trámite de Beneficio';
+        document.getElementById('legajoIdForBeneficio').value = currentLegajoId;
+        document.getElementById('interno').value = legajo.nombre_completo;
+        document.getElementById('stateDateContainer').classList.add('hidden');
+        document.getElementById('finalizeFieldsContainer').classList.add('hidden');
+        caseModal.style.display = 'flex';
+    });
+
+    addTramiteBtn.addEventListener('click', () => {
+        if (!isAuthenticated || !currentLegajoId) return;
+        const tipo = prompt("Ingrese el tipo de trámite (Ej: Examen Médico, Audiencia):");
+        if (!tipo) return;
+        const desc = prompt("Ingrese una breve descripción del trámite:");
+        if (desc === null) return;
+        postData({ action: 'addTramiteVario', id_legajo: currentLegajoId, tipo_tramite: tipo, descripcion: desc });
+    });
+
+    // --- APARIENCIA Y CONFIGURACIÓN ---
+    function toggleTheme() {
+        themeToggleDarkIcon.classList.toggle('hidden');
+        themeToggleLightIcon.classList.toggle('hidden');
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        updateDashboard(allData.beneficios);
+    }
+    
+    function styleComputoButtons(currentStatus) {
+        const buttons = computoButtonsContainer.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.classList.remove('bg-green-500', 'text-white', 'dark:bg-green-600', 'bg-gray-200', 'dark:bg-gray-600');
+            const buttonStatus = button.dataset.estado;
+            if (buttonStatus === currentStatus) {
+                button.classList.add('bg-green-500', 'text-white', 'dark:bg-green-600');
+            } else {
+                button.classList.add('bg-gray-200', 'dark:bg-gray-600');
+            }
+        });
+    }
+
+    themeToggleBtn.addEventListener('click', toggleTheme);
+    settingsBtn.addEventListener('click', () => settingsModal.style.display = 'flex');
+    cancelSettingsBtn.addEventListener('click', () => settingsModal.style.display = 'none');
+
+    // --- UTILIDADES ---
+    function setConnectionStatus(status, message) {
+        const dot = document.getElementById('connection-dot');
+        const text = document.getElementById('connection-text');
+        dot.className = 'relative inline-flex rounded-full h-3 w-3';
+        if (status === 'connected') { dot.classList.add('bg-green-500'); text.textContent = message || 'Conectado'; }
+        else if (status === 'error') { dot.classList.add('bg-red-500'); text.textContent = message || 'Error'; }
+        else { dot.classList.add('bg-gray-500'); text.textContent = message || 'Conectando...'; }
+    }
+    
+    function showAlert(title, message) {
+        alertTitle.textContent = title;
+        alertMessage.textContent = message;
+        alertModal.style.display = 'flex';
+    }
+    
+    function getContrastColor(hex) {
+        if (!hex) return '#000000';
+        const r = parseInt(hex.substr(1, 2), 16), g = parseInt(hex.substr(3, 2), 16), b = parseInt(hex.substr(5, 2), 16);
+        return (((r * 299) + (g * 587) + (b * 114)) / 1000 >= 128) ? '#000000' : '#ffffff';
+    }
+
+    // --- INICIALIZACIÓN ---
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        themeToggleLightIcon.classList.remove('hidden');
+    } else {
+        themeToggleDarkIcon.classList.remove('hidden');
+    }
+    initializeBoard();
+    fetchData();
+    showView('legajos');
+});
 </script>
 </body>
 </html>
-
