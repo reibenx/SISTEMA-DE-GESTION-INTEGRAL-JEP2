@@ -16,8 +16,10 @@
       --color-secondary:#f3f4f6; /* botones neutros */
       --color-accent:#2563eb;    /* acciones */
     }
+
     html,body{height:100%}
-    body{font-family:'Inter',sans-serif;background:#f7f7f8}
+    body{font-family:'Inter',sans-serif;background:#f7f7f8;color:#111827}
+
     header{background:var(--color-primary);color:white;padding:1rem 1.5rem;border-radius:0.75rem}
     header h1{font-size:1.75rem;font-weight:700}
 
@@ -32,8 +34,8 @@
 
     /* Modal base */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.40);display:none;align-items:center;justify-content:center;z-index:50}
+    .modal-backdrop.show{display:flex}           /* <-- FIX principal */
     .modal{background:white;border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.18)}
-    .modal.show{display:flex}
 
     /* Dark mode */
     .dark{background:#0f172a;color:#e5e7eb}
@@ -41,7 +43,12 @@
     .dark .relief-border{border-color:#1f2937;background:#0b1222}
     .dark .modal{background:#0b1222;color:#e5e7eb}
     .dark table{color:#e5e7eb}
+    .dark thead{color:#e5e7eb}
     .dark .btn-secondary{background:#111827;color:#e5e7eb;border:1px solid #1f2937}
+    .dark input, .dark select, .dark textarea{
+      background:#0f172a;color:#e5e7eb;border-color:#334155
+    }
+    .dark .text-gray-500, .dark .text-gray-600{ color:#cbd5e1 !important } /* Mejora contraste en oscuro */
 
     /* Timeline */
     .timeline{display:flex;align-items:center;gap:14px}
@@ -61,7 +68,7 @@
   </style>
 </head>
 
-<body id="body" class="text-gray-900">
+<body id="body">
   <!-- Header -->
   <div class="container mx-auto max-w-7xl px-3 pt-4">
     <header class="flex items-center justify-between">
@@ -260,7 +267,7 @@
     });
 
     $('#settingsBtn').onclick = ()=>{
-      $('#settingsModal').classList.add('show');
+      $('#settingsModal').classList.add('show');  // <-- ahora se muestra
       $('#colorPrimary').value = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#1e3a8a';
       $('#colorAccent').value  = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() || '#2563eb';
       $('#darkToggle').checked = $('#body').classList.contains('dark');
@@ -311,7 +318,7 @@
         $('#addSentenceBtn').classList.add('hidden');
         showToast('Sesión finalizada');
       } else {
-        loginModal.classList.add('show');
+        loginModal.classList.add('show');  // <-- ahora se muestra
       }
     };
     $('#cancelLoginBtn').onclick = ()=> loginModal.classList.remove('show');
@@ -422,9 +429,6 @@
     function openLegajoDetail(id){
       currentLegajoId=id;
       const leg = getLegajoById(id);
-      const sent = getSentenciasByLegajo(id);
-      const ben  = getBeneficiosByLegajo(id);
-      const tram = getTramitesByLegajo(id);
 
       $('#detailTitle').textContent = `${leg.nombre_completo||'Legajo'} — ${id}`;
       if(isAuthenticated){ $('#deleteLegajoBtn').classList.remove('hidden'); $('#editLegajoBtn').classList.remove('hidden'); }
@@ -461,7 +465,7 @@
         const fin = (leg.fecha_fin_condena||'').toString().slice(0,10);
         tabContent.innerHTML = `
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><label class="text-sm">ID Legajo</label><input value="${leg.id_legajo||''}" disabled class="w-full border rounded px-3 py-2 bg-gray-50"></div>
+            <div><label class="text-sm">ID Legajo</label><input value="${leg.id_legajo||''}" disabled class="w-full border rounded px-3 py-2 bg-gray-50 dark:bg-[#0f172a]"></div>
             <div><label class="text-sm">N° Prontuario</label><input id="editProntuario" value="${leg.nro_prontuario||''}" class="w-full border rounded px-3 py-2" disabled></div>
             <div><label class="text-sm">Nombre Completo</label><input id="editNombre" value="${leg.nombre_completo||''}" class="w-full border rounded px-3 py-2" disabled></div>
             <div><label class="text-sm">Defensor Actual</label><input id="editDefensor" value="${leg.defensor_actual||''}" class="w-full border rounded px-3 py-2" disabled></div>
@@ -590,12 +594,12 @@
         }
       };
 
-      detailModal.classList.add('show');
+      detailModal.classList.add('show');  // <-- ahora se muestra
     }
 
     // Helpers timeline
     window.setFechaClave = async function(id, key){
-      const leg = getLegajoById(id);
+      const leg = (allData.legajos||[]).find(x=>x.id_legajo==id) || {};
       let fechas={}; try{ fechas = JSON.parse(leg.fechas_clave_json||'{}'); }catch(e){}
       fechas[key] = new Date().toISOString();
       await postData({ action:'updateLegajoField', id_legajo:id, field:'fechas_clave_json', value: JSON.stringify(fechas) });
@@ -610,15 +614,6 @@
      * KANBAN BENEFICIOS
      **********************/
     const KANBAN_COLUMNS = ['Ingresado','En Gabinete','Regreso','Fiscalía','Defensoría','Para Despacho','Finalizado'];
-    const statusDateMap = {
-      'Ingresado': null,
-      'En Gabinete': 'fechaEnvioGabinete',
-      'Regreso': 'fechaRegresoGabinete',
-      'Fiscalía': 'fechaEnvioFiscalia',
-      'Defensoría': 'fechaEnvioDefensoria',
-      'Para Despacho': 'fechaDespacho',
-      'Finalizado': 'fechaFinalizado'
-    };
 
     function renderBoard(beneficios){
       const board = $('#kanban-board'); if(!board) return;
@@ -656,11 +651,6 @@
           c.appendChild(card);
           const newStatus = c.dataset.status;
           await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:id, newStatus });
-
-          // Si quieres forzar escritura de fecha según statusDateMap desde el front (ya lo hace el backend si tiene columna)
-          // const dateField = statusDateMap[newStatus];
-          // if(dateField){ await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:dateField, value:(new Date()).toISOString() }); }
-
           showToast(`Estado movido a: ${newStatus}`, 1500);
         }
       }));
@@ -668,7 +658,7 @@
 
     function calcStats(beneficios){
       $('#total-activos').textContent = (beneficios||[]).filter(b=>b.estado!=='Finalizado').length;
-      $('#avg-time').textContent = '—'; // Placeholder (puedes calcular con fechas si lo deseas)
+      $('#avg-time').textContent = '—'; // Placeholder
     }
 
     let chartInstance = null;
@@ -691,7 +681,8 @@
      * INICIO
      **********************/
     applyThemeFromStorage();
-    // Abrir/cerrar modales reutilizable
+
+    // Cerrar modales al hacer click fuera
     document.querySelectorAll('.modal-backdrop').forEach(m=>{
       m.addEventListener('click', (e)=>{ if(e.target===m) m.classList.remove('show'); });
     });
