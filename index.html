@@ -12,9 +12,9 @@
 
   <style>
     :root{
-      --color-primary:#1e3a8a;   /* encabezado */
-      --color-secondary:#f3f4f6; /* botones neutros */
-      --color-accent:#2563eb;    /* acciones */
+      --color-primary:#1e3a8a;   
+      --color-secondary:#f3f4f6; 
+      --color-accent:#2563eb;    
     }
 
     html,body{height:100%}
@@ -36,6 +36,12 @@
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.40);display:none;align-items:center;justify-content:center;z-index:50}
     .modal-backdrop.show{display:flex}
     .modal{background:white;border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.18)}
+
+    /* 🔧 FIX: asegurar que los modales de sentencias estén siempre encima */
+    #editarSentenciaModal.show,
+    #ingresarSentenciaModal.show {
+      z-index: 60; 
+    }
 
     /* Dark mode */
     .dark{background:#0f172a;color:#e5e7eb}
@@ -66,6 +72,7 @@
     th,td{white-space:nowrap}
   </style>
 </head>
+
 
 <body id="body">
   <!-- Header -->
@@ -820,3 +827,4 @@
   </script>
 </body>
 </html>
+
