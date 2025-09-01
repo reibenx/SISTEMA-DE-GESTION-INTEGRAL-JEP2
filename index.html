@@ -48,6 +48,9 @@
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.40);display:none;align-items:center;justify-content:center;z-index:50}
     .modal-backdrop.show{display:flex}
     .modal{background:white;border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.18)}
+    
+    /* Estilo para deshabilitar formulario */
+    .form-disabled{ opacity:0.7; pointer-events:none; }
 
     /* Dark mode */
     .dark{background:#0f172a;color:#e5e7eb}
@@ -311,7 +314,7 @@
   <div id="caseModal" class="modal-backdrop">
     <div class="modal p-6 w-full max-w-xl">
       <h2 id="modalTitle" class="text-xl font-bold mb-4">Agregar Nuevo Trámite</h2>
-      <div class="max-h-[70vh] overflow-y-auto pr-2">
+      <div id="caseModalContent" class="max-h-[70vh] overflow-y-auto pr-2">
         <form id="caseForm" class="space-y-4">
           <input type="hidden" id="caseId" name="caseId">
           
@@ -448,7 +451,7 @@
  * CONFIG
  **********************/
 const googleWebAppUrl = "https://script.google.com/macros/s/AKfycbyeY6uqUypUlY_JZnWxA09ygNdf9wd54LrHPWXSLuhK00nF370qrS1N3t9oZ2Fk5bJU/exec";
-const PASSWORD = "454545"; // ¡ADVERTENCIA DE SEGURIDAD! Esto no es seguro para producción.
+const PASSWORD = "454545"; 
 const CHAR_LIMIT = 255;
 
 let allData = { legajos: [], sentencias: [], beneficios: [], tramitesVarios: [] };
@@ -607,12 +610,7 @@ function renderLegajosTable(legajos){
     const tr=document.createElement("tr");
     tr.className="border-b hover:bg-gray-50 dark:hover:bg-[#0f172a] cursor-pointer";
     const fin = (l.fecha_fin_condena||'').toString().slice(0,10);
-    tr.innerHTML = `<td class='px-4 py-3'>${l.id_legajo}</td>
-      <td class='px-4 py-3'>${l.nro_prontuario||''}</td>
-      <td class='px-4 py-3'>${l.nombre_completo||''}</td>
-      <td class='px-4 py-3'>${l.defensor_actual||''}</td>
-      <td class='px-4 py-3'>${l.estado_computo||''}</td>
-      <td class='px-4 py-3'>${fin}</td>`;
+    tr.innerHTML = `<td class='px-4 py-3'>${l.id_legajo}</td><td class='px-4 py-3'>${l.nro_prontuario||''}</td><td class='px-4 py-3'>${l.nombre_completo||''}</td><td class='px-4 py-3'>${l.defensor_actual||''}</td><td class='px-4 py-3'>${l.estado_computo||''}</td><td class='px-4 py-3'>${fin}</td>`;
     tr.onclick = ()=> openLegajoDetail(l.id_legajo);
     tbody.appendChild(tr);
   });
@@ -686,194 +684,46 @@ async function deleteSentencia(id_sentencia){
  * DETALLE LEGAJO
  **********************/
 const detailModal = $('#legajoDetailModal');
-$('#closeDetail').onclick = ()=>{
-  detailModal.classList.remove('show');
-  isDetailModalOpen = false;
-};
+$('#closeDetail').onclick = ()=>{ detailModal.classList.remove('show'); isDetailModalOpen = false; };
 function getLegajoById(id){ return (allData.legajos||[]).find(x=>x.id_legajo==id) || {}; }
 function getSentenciasByLegajo(id){ return (allData.sentencias||[]).filter(s=>s.id_legajo==id); }
 function getBeneficiosByLegajo(id){ return (allData.beneficios||[]).filter(b=>b.id_legajo==id); }
 function getTramitesByLegajo(id){ return (allData.tramitesVarios||[]).filter(t=>t.id_legajo==id); }
 
 const stateOrder = ['Pendiente SPP','Provisorio','Enviado a Defensoría','Enviado a Fiscalía','Aprobado'];
-const stateToKey = {
-  'Pendiente SPP':'solicitudSPP',
-  'Provisorio':'computoProvisorio',
-  'Enviado a Defensoría':'envioDefensoria',
-  'Enviado a Fiscalía':'envioFiscalia',
-  'Aprobado':'autoAprobacion'
-};
-const steps = [
-  { key:'solicitudSPP',     label:'SPP/Defensor' },
-  { key:'computoProvisorio',label:'Provisorio' },
-  { key:'envioDefensoria',  label:'Defensoría' },
-  { key:'envioFiscalia',    label:'Fiscalía' },
-  { key:'autoAprobacion',   label:'Aprobación' }
-];
+const stateToKey = { 'Pendiente SPP':'solicitudSPP', 'Provisorio':'computoProvisorio', 'Enviado a Defensoría':'envioDefensoria', 'Enviado a Fiscalía':'envioFiscalia', 'Aprobado':'autoAprobacion' };
+const steps = [ { key:'solicitudSPP', label:'SPP/Defensor' }, { key:'computoProvisorio',label:'Provisorio' }, { key:'envioDefensoria', label:'Defensoría' }, { key:'envioFiscalia', label:'Fiscalía' }, { key:'autoAprobacion', label:'Aprobación' } ];
 
 function openLegajoDetail(id){
   currentLegajoId=id;
   isDetailModalOpen = true;
   const leg = getLegajoById(id);
-
   $('#detailTitle').textContent = `${leg.nombre_completo||'Legajo'} — ${id}`;
   if(isAuthenticated){ $('#deleteLegajoBtn').classList.remove('hidden'); $('#editLegajoBtn').classList.remove('hidden'); }
   else { $('#deleteLegajoBtn').classList.add('hidden'); $('#editLegajoBtn').classList.add('hidden'); }
-
   $$('.tab-btn').forEach(b=>b.classList.remove('active'));
   $$('.tab-btn')[0].classList.add('active');
-
   const tabContent = $('#tab-content');
-
   function renderTimeline(legRef){
     const currentState = legRef.estado_computo || '';
     const currentIdx = stateOrder.indexOf(currentState);
     let fechas={}; try{ fechas = JSON.parse(legRef.fechas_clave_json||'{}'); }catch(e){}
-    return `<div class="timeline">
-      ${steps.map((s,i)=>
-        `<div class="tl-step">
-          <div class="tl-dot
-            ${currentIdx>-1 && i<currentIdx ? 'completed' : ''}
-            ${currentIdx===i ? 'current' : ''}"></div>
-          <div class="text-xs">${s.label}</div>
-          <div class="text-[11px] ${fechas[s.key]?'':'text-gray-400'}">
-            ${fechas[s.key]? new Date(fechas[s.key]).toLocaleDateString(): '—'}
-          </div>
-        </div>
-        ${i<steps.length-1?`<div class="tl-line ${(currentIdx>-1 && i<currentIdx)?'active':''}"></div>`:''}
-      `).join('')}
-    </div>`;
+    return `<div class="timeline">${steps.map((s,i)=>`<div class="tl-step"><div class="tl-dot ${currentIdx>-1 && i<currentIdx ? 'completed' : ''} ${currentIdx===i ? 'current' : ''}"></div><div class="text-xs">${s.label}</div><div class="text-[11px] ${fechas[s.key]?'':'text-gray-400'}">${fechas[s.key]? new Date(fechas[s.key]).toLocaleDateString(): '—'}</div></div>${i<steps.length-1?`<div class="tl-line ${(currentIdx>-1 && i<currentIdx)?'active':''}"></div>`:''} `).join('')}</div>`;
   }
-
   function renderInfoTab(){
     const fin = (leg.fecha_fin_condena||'').toString().slice(0,10);
     const linkBtn = leg.link_computo ? `<button id="openComputoBtnInfo" class="btn btn-primary mt-3">Abrir Cómputo PDF</button>` : '';
-    tabContent.innerHTML = `
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><label class="text-sm">ID Legajo</label><input value="${leg.id_legajo||''}" disabled class="w-full border rounded px-3 py-2 bg-gray-50 dark:bg-[#0f172a]"></div>
-        <div><label class="text-sm">N° Prontuario</label><input id="editProntuario" value="${leg.nro_prontuario||''}" class="w-full border rounded px-3 py-2" disabled></div>
-        <div><label class="text-sm">Nombre Completo</label><input id="editNombre" value="${leg.nombre_completo||''}" class="w-full border rounded px-3 py-2" disabled></div>
-        <div><label class="text-sm">Defensor Actual</label><input id="editDefensor" value="${leg.defensor_actual||''}" class="w-full border rounded px-3 py-2" disabled></div>
-        <div><label class="text-sm">Fiscal Actual</label><input id="editFiscal" value="${leg.fiscal_actual||''}" class="w-full border rounded px-3 py-2" disabled></div>
-        <div><label class="text-sm">Estado Cómputo</label>
-          <select id="editEstado" class="w-full border rounded px-3 py-2" disabled>
-            ${['Pendiente SPP','Provisorio','Enviado a Defensoría','Enviado a Fiscalía','Aprobado','Observado'].map(v=>`<option ${v===(leg.estado_computo||'')?'selected':''}>${v}</option>`).join('')}
-          </select>
-        </div>
-        <div><label class="text-sm">Fecha Fin Condena</label><input id="editFin" type="date" value="${fin}" class="w-full border rounded px-3 py-2" disabled></div>
-        <div><label class="text-sm">Link Cómputo</label><input id="editLink" type="url" value="${leg.link_computo||''}" class="w-full border rounded px-3 py-2" disabled></div>
-      </div>
-      <div class="mt-6">
-        <h3 class="font-semibold mb-2">Línea de tiempo del cómputo</h3>
-        <div id="timelineWrap">${renderTimeline(leg)}</div>
-        ${linkBtn}
-      </div>
-      ${isAuthenticated?`<div class="mt-5 flex justify-end gap-2"><button id="saveLegajoBtn" class="btn btn-primary hidden">Guardar</button></div>`:''}`;
+    tabContent.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="text-sm">ID Legajo</label><input value="${leg.id_legajo||''}" disabled class="w-full border rounded px-3 py-2 bg-gray-50 dark:bg-[#0f172a]"></div><div><label class="text-sm">N° Prontuario</label><input id="editProntuario" value="${leg.nro_prontuario||''}" class="w-full border rounded px-3 py-2" disabled></div><div><label class="text-sm">Nombre Completo</label><input id="editNombre" value="${leg.nombre_completo||''}" class="w-full border rounded px-3 py-2" disabled></div><div><label class="text-sm">Defensor Actual</label><input id="editDefensor" value="${leg.defensor_actual||''}" class="w-full border rounded px-3 py-2" disabled></div><div><label class="text-sm">Fiscal Actual</label><input id="editFiscal" value="${leg.fiscal_actual||''}" class="w-full border rounded px-3 py-2" disabled></div><div><label class="text-sm">Estado Cómputo</label><select id="editEstado" class="w-full border rounded px-3 py-2" disabled>${['Pendiente SPP','Provisorio','Enviado a Defensoría','Enviado a Fiscalía','Aprobado','Observado'].map(v=>`<option ${v===(leg.estado_computo||'')?'selected':''}>${v}</option>`).join('')}</select></div><div><label class="text-sm">Fecha Fin Condena</label><input id="editFin" type="date" value="${fin}" class="w-full border rounded px-3 py-2" disabled></div><div><label class="text-sm">Link Cómputo</label><input id="editLink" type="url" value="${leg.link_computo||''}" class="w-full border rounded px-3 py-2" disabled></div></div><div class="mt-6"><h3 class="font-semibold mb-2">Línea de tiempo del cómputo</h3><div id="timelineWrap">${renderTimeline(leg)}</div>${linkBtn}</div>${isAuthenticated?`<div class="mt-5 flex justify-end gap-2"><button id="saveLegajoBtn" class="btn btn-primary hidden">Guardar</button></div>`:''}`;
     if (leg.link_computo) $('#openComputoBtnInfo').onclick = ()=> window.open(leg.link_computo, '_blank');
-
-    $('#editLegajoBtn').onclick = ()=>{
-      if(!isAuthenticated) return alert('Inicia sesión');
-      if(confirm('¿Seguro que quieres modificar este legajo?')){
-        ['#editProntuario','#editNombre','#editDefensor','#editFiscal','#editEstado','#editFin','#editLink'].forEach(sel=>{
-          const el = document.querySelector(sel); if(el) el.disabled=false;
-        });
-        $('#saveLegajoBtn').classList.remove('hidden');
-        $('#editEstado').addEventListener('change', async (ev)=>{
-          const newState = ev.target.value;
-          await postData({ action:'updateComputoEstado', id_legajo:leg.id_legajo, newState }, {refreshData:false, refreshModal:false});
-          const key = stateToKey[newState];
-          if (key){
-            let fechas={}; try{ fechas = JSON.parse(leg.fechas_clave_json||'{}'); }catch(e){}
-            fechas[key] = new Date().toISOString();
-            await postData({ action:'updateLegajoField', id_legajo:leg.id_legajo, field:'fechas_clave_json', value: JSON.stringify(fechas) }, {refreshData:true, refreshModal:true});
-          } else {
-            await fetchData();
-            if(isDetailModalOpen) openLegajoDetail(leg.id_legajo);
-          }
-        }, { once:true });
-      }
-    };
-
-    $('#saveLegajoBtn').onclick = async ()=>{
-      if(!confirm('¿Seguro de guardar los cambios?')) return;
-      const btn = $('#saveLegajoBtn');
-      btn.textContent = 'Guardando datos...'; btn.disabled = true;
-      await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nro_prontuario',value:$('#editProntuario').value},{refreshData:false});
-      await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nombre_completo',value:$('#editNombre').value},{refreshData:false});
-      await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'defensor_actual',value:$('#editDefensor').value},{refreshData:false});
-      await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'fiscal_actual',value:$('#editFiscal').value},{refreshData:false});
-      await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'fecha_fin_condena',value:$('#editFin').value},{refreshData:false});
-      await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'link_computo',value:$('#editLink').value},{refreshData:true, refreshModal:true});
-      btn.textContent = 'Guardar'; btn.disabled=false;
-      ['#editProntuario','#editNombre','#editDefensor','#editFiscal','#editEstado','#editFin','#editLink'].forEach(sel=>{
-        const el = document.querySelector(sel); if(el) el.disabled=true;
-      });
-      btn.classList.add('hidden');
-      showToast('Datos guardados con éxito');
-    };
+    $('#editLegajoBtn').onclick = ()=>{ if(!isAuthenticated) return alert('Inicia sesión'); if(confirm('¿Seguro que quieres modificar este legajo?')){ ['#editProntuario','#editNombre','#editDefensor','#editFiscal','#editEstado','#editFin','#editLink'].forEach(sel=>{ const el = document.querySelector(sel); if(el) el.disabled=false; }); $('#saveLegajoBtn').classList.remove('hidden'); $('#editEstado').addEventListener('change', async (ev)=>{ const newState = ev.target.value; await postData({ action:'updateComputoEstado', id_legajo:leg.id_legajo, newState }, {refreshData:false, refreshModal:false}); const key = stateToKey[newState]; if (key){ let fechas={}; try{ fechas = JSON.parse(leg.fechas_clave_json||'{}'); }catch(e){} fechas[key] = new Date().toISOString(); await postData({ action:'updateLegajoField', id_legajo:leg.id_legajo, field:'fechas_clave_json', value: JSON.stringify(fechas) }, {refreshData:true, refreshModal:true}); } else { await fetchData(); if(isDetailModalOpen) openLegajoDetail(leg.id_legajo); } }, { once:true }); } };
+    $('#saveLegajoBtn').onclick = async ()=>{ if(!confirm('¿Seguro de guardar los cambios?')) return; const btn = $('#saveLegajoBtn'); btn.textContent = 'Guardando datos...'; btn.disabled = true; await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nro_prontuario',value:$('#editProntuario').value},{refreshData:false}); await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nombre_completo',value:$('#editNombre').value},{refreshData:false}); await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'defensor_actual',value:$('#editDefensor').value},{refreshData:false}); await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'fiscal_actual',value:$('#editFiscal').value},{refreshData:false}); await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'fecha_fin_condena',value:$('#editFin').value},{refreshData:false}); await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'link_computo',value:$('#editLink').value},{refreshData:true, refreshModal:true}); btn.textContent = 'Guardar'; btn.disabled=false; ['#editProntuario','#editNombre','#editDefensor','#editFiscal','#editEstado','#editFin','#editLink'].forEach(sel=>{ const el = document.querySelector(sel); if(el) el.disabled=true; }); btn.classList.add('hidden'); showToast('Datos guardados con éxito'); };
   }
-
-  function renderSentenciasTab(){
-    const sent = getSentenciasByLegajo(id);
-    $('#tab-content').innerHTML = sent.length
-      ? sent.map(s=>
-        `<div class='p-3 border rounded flex items-center justify-between gap-3'>
-          <div class='min-w-0'>
-            <div class='font-medium truncate'>Causa ${s.nro_causa}</div>
-            <div class='text-sm opacity-80 truncate'>${s.delito} • ${s.pena_impuesta} • ${ (s.fecha_sentencia||'').toString().slice(0,10) }</div>
-          </div>
-          <div class='flex items-center gap-2 flex-shrink-0'>
-            ${s.enlace_sentencia?`<a class='btn btn-secondary' target='_blank' href='${s.enlace_sentencia}'>Ver</a>`:''}
-            ${isAuthenticated?`<button class='btn btn-secondary' onclick="openEditarSentenciaModal('${s.id_sentencia}')">Modificar</button>`:''}
-            ${isAuthenticated?`<button class='btn btn-danger' onclick="deleteSentencia('${s.id_sentencia}')">Eliminar</button>`:''}
-          </div>
-        </div>`).join('')
-      : '<div class="text-sm opacity-70">Sin sentencias.</div>';
-  }
-
-  function renderComputoTab(){
-    const leg = getLegajoById(id);
-    const linkBtn = leg.link_computo ? `<button id="openComputoBtnComp" class="btn btn-primary mt-3">Abrir Cómputo PDF</button>` : '';
-    $('#tab-content').innerHTML = `<div id="timelineWrap">${renderTimeline(leg)}</div> ${linkBtn}`;
-    if (leg.link_computo) $('#openComputoBtnComp').onclick = ()=> window.open(leg.link_computo, '_blank');
-  }
-
-  function renderTramitesTab(){
-    const ben  = getBeneficiosByLegajo(id);
-    const tram = getTramitesByLegajo(id);
-    const all  = ben.concat(tram);
-    $('#tab-content').innerHTML = (all.length
-      ? all.map(t=>
-        `<div class='p-3 border rounded'>
-          <div class='font-medium'>${t.expediente||t.tipo_tramite||''}</div>
-          <div class='text-sm opacity-80'>${t.beneficio||t.tipo_tramite||''} • Estado: ${t.estado||''}</div>
-        </div>`).join('')
-      : '<div class="text-sm opacity-70">Sin trámites/beneficios.</div>');
-  }
-
-  $$('.tab-btn').forEach(btn=>{
-    btn.onclick = ()=>{
-      $$('.tab-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      const tab = btn.dataset.tab;
-      if(tab==='info')      renderInfoTab();
-      if(tab==='sentencias')renderSentenciasTab();
-      if(tab==='computo')   renderComputoTab();
-      if(tab==='tramites')  renderTramitesTab();
-    };
-  });
+  function renderSentenciasTab(){ const sent = getSentenciasByLegajo(id); $('#tab-content').innerHTML = sent.length ? sent.map(s=>`<div class='p-3 border rounded flex items-center justify-between gap-3'><div class='min-w-0'><div class='font-medium truncate'>Causa ${s.nro_causa}</div><div class='text-sm opacity-80 truncate'>${s.delito} • ${s.pena_impuesta} • ${ (s.fecha_sentencia||'').toString().slice(0,10) }</div></div><div class='flex items-center gap-2 flex-shrink-0'>${s.enlace_sentencia?`<a class='btn btn-secondary' target='_blank' href='${s.enlace_sentencia}'>Ver</a>`:''}${isAuthenticated?`<button class='btn btn-secondary' onclick="openEditarSentenciaModal('${s.id_sentencia}')">Modificar</button>`:''}${isAuthenticated?`<button class='btn btn-danger' onclick="deleteSentencia('${s.id_sentencia}')">Eliminar</button>`:''}</div></div>`).join('') : '<div class="text-sm opacity-70">Sin sentencias.</div>'; }
+  function renderComputoTab(){ const leg = getLegajoById(id); const linkBtn = leg.link_computo ? `<button id="openComputoBtnComp" class="btn btn-primary mt-3">Abrir Cómputo PDF</button>` : ''; $('#tab-content').innerHTML = `<div id="timelineWrap">${renderTimeline(leg)}</div> ${linkBtn}`; if (leg.link_computo) $('#openComputoBtnComp').onclick = ()=> window.open(leg.link_computo, '_blank'); }
+  function renderTramitesTab(){ const ben = getBeneficiosByLegajo(id); const tram = getTramitesByLegajo(id); const all = ben.concat(tram); $('#tab-content').innerHTML = (all.length ? all.map(t=>`<div class='p-3 border rounded'><div class='font-medium'>${t.expediente||t.tipo_tramite||''}</div><div class='text-sm opacity-80'>${t.beneficio||t.tipo_tramite||''} • Estado: ${t.estado||''}</div></div>`).join('') : '<div class="text-sm opacity-70">Sin trámites/beneficios.</div>'); }
+  $$('.tab-btn').forEach(btn=>{ btn.onclick = ()=>{ $$('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); const tab = btn.dataset.tab; if(tab==='info') renderInfoTab(); if(tab==='sentencias')renderSentenciasTab(); if(tab==='computo') renderComputoTab(); if(tab==='tramites') renderTramitesTab(); }; });
   renderInfoTab();
-
-  $('#deleteLegajoBtn').onclick = async ()=>{
-    if(!isAuthenticated) return alert('Inicia sesión');
-    if(confirm('¿Eliminar legajo y TODOS sus registros vinculados? Esta acción no se puede deshacer.')){
-      await postData({action:'deleteLegajoCompleto',id_legajo:id}, {refreshData:true, refreshModal:false});
-      detailModal.classList.remove('show');
-      isDetailModalOpen = false;
-      showToast('Legajo eliminado');
-    }
-  };
-
+  $('#deleteLegajoBtn').onclick = async ()=>{ if(!isAuthenticated) return alert('Inicia sesión'); if(confirm('¿Eliminar legajo y TODOS sus registros vinculados? Esta acción no se puede deshacer.')){ await postData({action:'deleteLegajoCompleto',id_legajo:id}, {refreshData:true, refreshModal:false}); detailModal.classList.remove('show'); isDetailModalOpen = false; showToast('Legajo eliminado'); } };
   detailModal.classList.add('show');
 }
 
@@ -887,240 +737,69 @@ let casesData = [];
 let benefitsChart = null;
 let caseIdToFinalize = null;
 
-function loadBenefitColors() {
-    const savedColors = localStorage.getItem('benefit_colors');
-    benefitColors = {...DEFAULT_BENEFIT_COLORS};
-    if (savedColors) {
-        try {
-            const customColors = JSON.parse(savedColors);
-            Object.assign(benefitColors, customColors);
-        } catch (e) { console.error("Error parsing benefit colors", e); }
-    }
-}
-function renderBenefitColorSettings() {
-    const container = $('#benefitColorSettings');
-    container.innerHTML = '';
-    Object.keys(DEFAULT_BENEFIT_COLORS).forEach(benefit => {
-        const currentColor = benefitColors[benefit] || DEFAULT_BENEFIT_COLORS[benefit];
-        const wrapper = document.createElement('label');
-        wrapper.className = 'text-sm';
-        wrapper.innerHTML = `${benefit} <input type="color" data-benefit="${benefit}" value="${currentColor}" class="w-full h-10 border rounded mt-1">`;
-        container.appendChild(wrapper);
-    });
-}
+function loadBenefitColors() { const savedColors = localStorage.getItem('benefit_colors'); benefitColors = {...DEFAULT_BENEFIT_COLORS}; if (savedColors) { try { const customColors = JSON.parse(savedColors); Object.assign(benefitColors, customColors); } catch (e) { console.error("Error parsing benefit colors", e); } } }
+function renderBenefitColorSettings() { const container = $('#benefitColorSettings'); container.innerHTML = ''; Object.keys(DEFAULT_BENEFIT_COLORS).forEach(benefit => { const currentColor = benefitColors[benefit] || DEFAULT_BENEFIT_COLORS[benefit]; const wrapper = document.createElement('label'); wrapper.className = 'text-sm'; wrapper.innerHTML = `${benefit} <input type="color" data-benefit="${benefit}" value="${currentColor}" class="w-full h-10 border rounded mt-1">`; container.appendChild(wrapper); }); }
 
 function hydrateCasesFromBeneficios(beneficios){
   casesData = (beneficios||[]).map(b=>({
-    id: b.id_beneficio_legajo,
-    id_legajo: b.id_legajo,
-    expediente: b.expediente,
-    interno: b.interno,
-    beneficio: b.beneficio,
-    estado: b.estado,
-    Observacion: b.Observacion || '', // CORRECCIÓN: Usar la misma capitalización que en la hoja de cálculo
-    fechaIngreso: b.fechaIngreso,
-    fechaEnvioGabinete: b.fechaEnvioGabinete,
-    fechaRegresoGabinete: b.fechaRegresoGabinete,
-    fechaEnvioFiscalia: b.fechaEnvioFiscalia,
-    fechaEnvioDefensoria: b.fechaEnvioDefensoria,
-    fechaDespacho: b.fechaDespacho,
-    fechaFinalizado: b.fechaFinalizado,
-    motivoFinalizado: b.motivoFinalizado,
-    enlaceResolucion: b.enlaceResolucion
+    id: b.id_beneficio_legajo, id_legajo: b.id_legajo, expediente: b.expediente, interno: b.interno,
+    beneficio: b.beneficio, estado: b.estado, Observacion: b.Observacion || '', fechaIngreso: b.fechaIngreso,
+    fechaEnvioGabinete: b.fechaEnvioGabinete, fechaRegresoGabinete: b.fechaRegresoGabinete, fechaEnvioFiscalia: b.fechaEnvioFiscalia,
+    fechaEnvioDefensoria: b.fechaEnvioDefensoria, fechaDespacho: b.fechaDespacho, fechaFinalizado: b.fechaFinalizado,
+    motivoFinalizado: b.motivoFinalizado, enlaceResolucion: b.enlaceResolucion
   }));
 }
 
 function initializeBoard(){
-  const board = $('#kanban-board');
-  board.innerHTML = '';
-  const topRow = document.createElement('div');
-  topRow.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6';
-  const bottomRow = document.createElement('div');
-  bottomRow.className = 'mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6';
-
-  KANBAN_COLUMNS.forEach((status, index)=>{
-    const col = document.createElement('div');
-    col.className = 'rounded-xl p-4 kanban-column relief-border';
-    col.dataset.status = status;
-    col.innerHTML = `<h2 class="font-bold text-lg mb-4 flex justify-between items-center dark:text-white">${status}<span id="count-${status.toLowerCase().replace(/ /g,'-')}" class="text-xs bg-gray-200 text-gray-700 rounded-full px-2 py-0.5">0</span></h2><div class="space-y-3 card-container" ondragover="event.preventDefault()"></div>`;
-    if (index<4) topRow.appendChild(col); else bottomRow.appendChild(col);
-  });
-
-  board.appendChild(topRow);
-  board.appendChild(bottomRow);
+  const board = $('#kanban-board'); board.innerHTML = '';
+  const topRow = document.createElement('div'); topRow.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6';
+  const bottomRow = document.createElement('div'); bottomRow.className = 'mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6';
+  KANBAN_COLUMNS.forEach((status, index)=>{ const col = document.createElement('div'); col.className = 'rounded-xl p-4 kanban-column relief-border'; col.dataset.status = status; col.innerHTML = `<h2 class="font-bold text-lg mb-4 flex justify-between items-center dark:text-white">${status}<span id="count-${status.toLowerCase().replace(/ /g,'-')}" class="text-xs bg-gray-200 text-gray-700 rounded-full px-2 py-0.5">0</span></h2><div class="space-y-3 card-container" ondragover="event.preventDefault()"></div>`; if (index<4) topRow.appendChild(col); else bottomRow.appendChild(col); });
+  board.appendChild(topRow); board.appendChild(bottomRow);
 }
 
 function renderBoard(data){
-  initializeBoard();
-  const board = $('#kanban-board');
-  if (!Array.isArray(data)) return;
+  initializeBoard(); const board = $('#kanban-board'); if (!Array.isArray(data)) return;
   KANBAN_COLUMNS.forEach(status=> updateColumnCounter(status, 0, true));
-
-  data.forEach(item=>{
-    const status = (item.estado||'').trim();
-    const col = board.querySelector(`.kanban-column[data-status="${status}"] .card-container`);
-    if (!col) return;
-    const card = createCardElement(item);
-    col.appendChild(card);
-    updateColumnCounter(status, 1);
-  });
-
+  data.forEach(item=>{ const status = (item.estado||'').trim(); const col = board.querySelector(`.kanban-column[data-status="${status}"] .card-container`); if (!col) return; const card = createCardElement(item); col.appendChild(card); updateColumnCounter(status, 1); });
   if (isAuthenticated) setupDragAndDrop();
 }
 
 function createCardElement(caseItem){
-  const card = document.createElement('div');
-  card.className = 'kanban-card p-4 rounded-xl relief-border cursor-pointer';
-  card.dataset.id = caseItem.id;
-
-  const bgColor = benefitColors[caseItem.beneficio] || benefitColors['Otro'];
-  const textColor = getContrastColor(bgColor);
+  const card = document.createElement('div'); card.className = 'kanban-card p-4 rounded-xl relief-border cursor-pointer'; card.dataset.id = caseItem.id;
+  const bgColor = benefitColors[caseItem.beneficio] || benefitColors['Otro']; const textColor = getContrastColor(bgColor);
   const displayDate = caseItem.fechaIngreso ? new Date(caseItem.fechaIngreso).toLocaleDateString() : 'N/A';
   const legajoInfo = caseItem.id_legajo ? `<div class="text-xs mt-1 font-semibold">Legajo: #${caseItem.id_legajo}</div>` : '';
   const observacionInfo = caseItem.Observacion ? `<p class="mt-2 text-xs italic text-gray-600 dark:text-gray-400 border-l-2 border-gray-300 pl-2 truncate" title="${caseItem.Observacion}">${caseItem.Observacion}</p>` : '';
-
   card.innerHTML = `<div class="font-bold text-lg card-text-main">${caseItem.expediente || 'S/N'}</div><div class="text-sm mb-2 card-text-secondary">${caseItem.interno || 'S/N'}</div><div class="benefit-tag text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full" style="background-color:${bgColor}; color:${textColor};">${caseItem.beneficio || 'Otro'}</div>${legajoInfo}<div class="text-xs mt-2 card-dates card-text-secondary"><div>Ingreso: ${displayDate}</div></div>${observacionInfo}<div class="finalizado-info">${caseItem.estado==='Finalizado' && caseItem.motivoFinalizado ? `<p class="mt-2 text-xs italic">Motivo: ${caseItem.motivoFinalizado}</p>`:''}${caseItem.estado==='Finalizado' && caseItem.enlaceResolucion ? `<a href="${caseItem.enlaceResolucion}" target="_blank" class="mt-2 inline-block text-xs text-indigo-600 hover:underline">Ver Resolución</a>`:''}</div>`;
-  
-  if (caseItem.estado === 'En Gabinete' && caseItem.fechaEnvioGabinete) {
-    const entryDate = new Date(caseItem.fechaEnvioGabinete);
-    const days = (Date.now()-entryDate.getTime())/(1000*3600*24);
-    if ($('#alarmToggle').checked && days > 7) {
-      card.style.boxShadow = '0 0 0 0 rgba(239,68,68,.7)';
-      card.animate([{ boxShadow: '0 0 0 0 rgba(239,68,68,.7)' },{ boxShadow: '0 0 18px 6px rgba(239,68,68,0)' },{ boxShadow: '0 0 0 0 rgba(239,68,68,0)' }], { duration: 1500, iterations: Infinity });
-    }
-  }
-
-  if (isAuthenticated) {
-    card.classList.add('draggable');
-    card.draggable = true;
-    card.addEventListener('click', ()=> openEditModal(caseItem));
-  }
+  if (caseItem.estado === 'En Gabinete' && caseItem.fechaEnvioGabinete) { const entryDate = new Date(caseItem.fechaEnvioGabinete); const days = (Date.now()-entryDate.getTime())/(1000*3600*24); if ($('#alarmToggle').checked && days > 7) { card.style.boxShadow = '0 0 0 0 rgba(239,68,68,.7)'; card.animate([{ boxShadow: '0 0 0 0 rgba(239,68,68,.7)' },{ boxShadow: '0 0 18px 6px rgba(239,68,68,0)' },{ boxShadow: '0 0 0 0 rgba(239,68,68,0)' }], { duration: 1500, iterations: Infinity }); } }
+  if (isAuthenticated) { card.classList.add('draggable'); card.draggable = true; card.addEventListener('click', ()=> openEditModal(caseItem)); }
   return card;
 }
 
 function setupDragAndDrop(){
-  const cards = $$('.draggable');
-  const columns = $$('.kanban-column');
-  cards.forEach(c=>{
-    c.addEventListener('dragstart', ()=> c.classList.add('dragging'));
-    c.addEventListener('dragend', ()=> c.classList.remove('dragging'));
-  });
-  columns.forEach(column=>{
-    column.addEventListener('dragover', e=>{ e.preventDefault(); if($('.dragging')) column.classList.add('drag-over'); });
-    column.addEventListener('dragleave', ()=> column.classList.remove('drag-over'));
-    column.addEventListener('drop', async e=>{
-      e.preventDefault();
-      column.classList.remove('drag-over');
-      const draggingCard = $('.dragging');
-      if (!draggingCard) return;
-      const cardId = draggingCard.dataset.id;
-      const newStatus = column.dataset.status;
-      const oldStatus = draggingCard.closest('.kanban-column').dataset.status;
-      if (oldStatus === newStatus) return;
-      
-      const item = casesData.find(c=>c.id==cardId);
-      if (!item) return;
-
-      if (newStatus === 'Finalizado') {
-        caseIdToFinalize = cardId;
-        $('#finalizeModal').classList.add('show');
-        return;
-      }
-      
-      column.querySelector('.card-container').appendChild(draggingCard);
-      updateColumnCounter(oldStatus,-1);
-      updateColumnCounter(newStatus,1);
-      
-      item.estado = newStatus;
-      item.Observacion = '';
-      
-      await postData({ action:'updateBeneficioField', id_beneficio_legajo:cardId, field:'Observacion', value: '' }, {refreshData:false});
-      
-      const map = {'Fiscalía':'fechaEnvioFiscalia','Defensoría':'fechaEnvioDefensoria','En Gabinete':'fechaEnvioGabinete','Regreso':'fechaRegresoGabinete','Para Despacho':'fechaDespacho'};
-      const field = map[newStatus];
-      if (field) {
-        const iso = new Date().toISOString();
-        item[field] = iso;
-        await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:cardId, newStatus }, {refreshData:false});
-        await postData({ action:'updateBeneficioField', id_beneficio_legajo:cardId, field, value: iso }, {refreshData:true});
-      } else {
-        await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:cardId, newStatus }, {refreshData:true});
-      }
-    });
-  });
+  const cards = $$('.draggable'); const columns = $$('.kanban-column');
+  cards.forEach(c=>{ c.addEventListener('dragstart', ()=> c.classList.add('dragging')); c.addEventListener('dragend', ()=> c.classList.remove('dragging')); });
+  columns.forEach(column=>{ column.addEventListener('dragover', e=>{ e.preventDefault(); if($('.dragging')) column.classList.add('drag-over'); }); column.addEventListener('dragleave', ()=> column.classList.remove('drag-over')); column.addEventListener('drop', async e=>{ e.preventDefault(); column.classList.remove('drag-over'); const draggingCard = $('.dragging'); if (!draggingCard) return; const cardId = draggingCard.dataset.id; const newStatus = column.dataset.status; const oldStatus = draggingCard.closest('.kanban-column').dataset.status; if (oldStatus === newStatus) return; const item = casesData.find(c=>c.id==cardId); if (!item) return; if (newStatus === 'Finalizado') { caseIdToFinalize = cardId; $('#finalizeModal').classList.add('show'); return; } column.querySelector('.card-container').appendChild(draggingCard); updateColumnCounter(oldStatus,-1); updateColumnCounter(newStatus,1); item.estado = newStatus; item.Observacion = ''; await postData({ action:'updateBeneficioField', id_beneficio_legajo:cardId, field:'Observacion', value: '' }, {refreshData:false}); const map = {'Fiscalía':'fechaEnvioFiscalia','Defensoría':'fechaEnvioDefensoria','En Gabinete':'fechaEnvioGabinete','Regreso':'fechaRegresoGabinete','Para Despacho':'fechaDespacho'}; const field = map[newStatus]; if (field) { const iso = new Date().toISOString(); item[field] = iso; await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:cardId, newStatus }, {refreshData:false}); await postData({ action:'updateBeneficioField', id_beneficio_legajo:cardId, field, value: iso }, {refreshData:true}); } else { await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:cardId, newStatus }, {refreshData:true}); } }); });
 }
 
-function updateColumnCounter(status, change, reset=false){
-  const id = `#count-${status.toLowerCase().replace(/ /g,'-')}`;
-  const el = $(id);
-  if (!el) return;
-  if (reset) el.textContent = '0';
-  else el.textContent = String(parseInt(el.textContent,10) + change);
-}
-
+function updateColumnCounter(status, change, reset=false){ const id = `#count-${status.toLowerCase().replace(/ /g,'-')}`; const el = $(id); if (!el) return; if (reset) el.textContent = '0'; else el.textContent = String(parseInt(el.textContent,10) + change); }
 function getContrastColor(hex){ if(!hex) return '#000'; const r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16); return (((r*299)+(g*587)+(b*114))/1000>=128)?'#000':'#fff'; }
-
-function calcStats(data){
-  const active = (data||[]).filter(c=>c.estado!=='Finalizado');
-  $('#total-activos').textContent = active.length;
-  const gabinete = (data||[]).filter(c=>c.fechaEnvioGabinete && c.fechaRegresoGabinete);
-  if (gabinete.length>0){
-    const total = gabinete.reduce((acc,c)=> acc + (Math.abs(new Date(c.fechaRegresoGabinete)-new Date(c.fechaEnvioGabinete))/(1000*60*60*24)), 0);
-    $('#avg-time').textContent = `${(total/gabinete.length).toFixed(1)} días`;
-  } else { $('#avg-time').textContent = 'N/A'; }
-}
-
-function renderChart(data){
-  const el = $('#benefitsChart'); if(!el) return;
-  const ctx = el.getContext('2d');
-  const counts = {};
-  (data||[]).filter(c=>c.estado!=='Finalizado').forEach(b=> counts[b.beneficio]=(counts[b.beneficio]||0)+1 );
-  const labels = Object.keys(counts);
-  const values = Object.values(counts);
-  if (benefitsChart) benefitsChart.destroy();
-  const isDark = $('#body').classList.contains('dark');
-  benefitsChart = new Chart(ctx,{
-    type:'pie',
-    data:{ labels, datasets:[{ data: values, backgroundColor: labels.map(l=> benefitColors[l] || benefitColors['Otro']), borderColor: isDark? 'var(--dark-bg-general)':'var(--light-bg-general)', borderWidth:3 }]},
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{ color: isDark ? '#d1d5db' : '#4b5563' } } } }
-  });
-}
-
-function populateLegajosDropdown(selectedId = null) {
-    const select = $('#id_legajo');
-    select.innerHTML = '<option value="">-- Seleccione un legajo --</option>';
-    (allData.legajos || []).sort((a, b) => (a.nombre_completo || '').localeCompare(b.nombre_completo)).forEach(legajo => {
-        const option = document.createElement('option');
-        option.value = legajo.id_legajo;
-        option.textContent = `${legajo.nombre_completo} - Pront. ${legajo.nro_prontuario || 'S/N'}`;
-        if (selectedId && legajo.id_legajo == selectedId) {
-            option.selected = true;
-        }
-        select.appendChild(option);
-    });
-}
-
-const toInputDate = (isoString) => {
-    if (!isoString) return '';
-    try {
-        const d = new Date(isoString);
-        const off = d.getTimezoneOffset();
-        const adj = new Date(d.getTime() - off * 60 * 1000);
-        return adj.toISOString().split('T')[0];
-    } catch (e) { return ''; }
-};
+function calcStats(data){ const active = (data||[]).filter(c=>c.estado!=='Finalizado'); $('#total-activos').textContent = active.length; const gabinete = (data||[]).filter(c=>c.fechaEnvioGabinete && c.fechaRegresoGabinete); if (gabinete.length>0){ const total = gabinete.reduce((acc,c)=> acc + (Math.abs(new Date(c.fechaRegresoGabinete)-new Date(c.fechaEnvioGabinete))/(1000*60*60*24)), 0); $('#avg-time').textContent = `${(total/gabinete.length).toFixed(1)} días`; } else { $('#avg-time').textContent = 'N/A'; } }
+function renderChart(data){ const el = $('#benefitsChart'); if(!el) return; const ctx = el.getContext('2d'); const counts = {}; (data||[]).filter(c=>c.estado!=='Finalizado').forEach(b=> counts[b.beneficio]=(counts[b.beneficio]||0)+1 ); const labels = Object.keys(counts); const values = Object.values(counts); if (benefitsChart) benefitsChart.destroy(); const isDark = $('#body').classList.contains('dark'); benefitsChart = new Chart(ctx,{ type:'pie', data:{ labels, datasets:[{ data: values, backgroundColor: labels.map(l=> benefitColors[l] || benefitColors['Otro']), borderColor: isDark? 'var(--dark-bg-general)':'var(--light-bg-general)', borderWidth:3 }]}, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{ color: isDark ? '#d1d5db' : '#4b5563' } } } } }); }
+function populateLegajosDropdown(selectedId = null) { const select = $('#id_legajo'); select.innerHTML = '<option value="">-- Seleccione un legajo --</option>'; (allData.legajos || []).sort((a, b) => (a.nombre_completo || '').localeCompare(b.nombre_completo)).forEach(legajo => { const option = document.createElement('option'); option.value = legajo.id_legajo; option.textContent = `${legajo.nombre_completo} - Pront. ${legajo.nro_prontuario || 'S/N'}`; if (selectedId && legajo.id_legajo == selectedId) { option.selected = true; } select.appendChild(option); }); }
+const toInputDate = (isoString) => { if (!isoString) return ''; try { const d = new Date(isoString); const off = d.getTimezoneOffset(); const adj = new Date(d.getTime() - off * 60 * 1000); return adj.toISOString().split('T')[0]; } catch (e) { return ''; } };
 
 function openEditModal(caseItem){
   $('#modalTitle').textContent = 'Editar Trámite';
   $('#deleteCaseBtn').classList.remove('hidden');
   populateLegajosDropdown(caseItem.id_legajo);
-  
   $('#id_legajo').value = caseItem.id_legajo || '';
   $('#interno').value = caseItem.interno || '';
   $('#caseId').value = caseItem.id || '';
   $('#expediente').value = caseItem.expediente || '';
   $('#beneficio').value = caseItem.beneficio || 'Otro';
-  $('#observacion').value = caseItem.Observacion || ''; // CORRECCIÓN
+  $('#observacion').value = caseItem.Observacion || '';
   $('#fechaIngreso').value = toInputDate(caseItem.fechaIngreso);
   $('#fechaEnvioGabinete').value = toInputDate(caseItem.fechaEnvioGabinete);
   $('#fechaRegresoGabinete').value = toInputDate(caseItem.fechaRegresoGabinete);
@@ -1130,7 +809,6 @@ function openEditModal(caseItem){
   $('#fechaFinalizado').value = toInputDate(caseItem.fechaFinalizado);
   $('#motivoFinalizadoEdit').value = caseItem.motivoFinalizado || '';
   $('#enlaceResolucionEdit').value = caseItem.enlaceResolucion || '';
-
   updateCharCounter();
   $('#caseModal').classList.add('show');
 }
@@ -1138,47 +816,58 @@ function openEditModal(caseItem){
 $('#cancelBtn').onclick = ()=> $('#caseModal').classList.remove('show');
 $('#caseModal').addEventListener('click', (e)=>{ if(e.target===e.currentTarget) e.currentTarget.classList.remove('show'); });
 
+function setFormDisabled(disabled) {
+    const form = $('#caseForm');
+    const content = $('#caseModalContent');
+    if (disabled) {
+        content.classList.add('form-disabled');
+    } else {
+        content.classList.remove('form-disabled');
+    }
+    // Deshabilitar botones de acción también
+    $('#saveCaseBtn').disabled = disabled;
+    $('#cancelBtn').disabled = disabled;
+    $('#deleteCaseBtn').disabled = disabled;
+}
+
 $('#caseForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const saveBtn = $('#saveCaseBtn');
-  const orig = saveBtn.textContent;
-  saveBtn.textContent = 'Guardando...'; saveBtn.disabled = true; $('#cancelBtn').disabled=true;
+  saveBtn.textContent = 'Guardando...';
+  setFormDisabled(true);
 
   const fd = new FormData(e.target);
   const id = fd.get('caseId');
   const payload = Object.fromEntries(fd.entries());
 
-  if (id){
-    for (const [key, value] of Object.entries(payload)) {
-        if (key !== 'caseId') {
-            await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:key, value }, {refreshData:false});
-        }
+  try {
+    if (id){ // MODO EDICIÓN (OPTIMIZADO)
+        const dataToUpdate = payload;
+        delete dataToUpdate.caseId; // No es necesario enviar el ID dentro del objeto de datos
+        
+        await postData({
+            action: 'updateBeneficioCompleto',
+            id_beneficio_legajo: id,
+            data: dataToUpdate
+        }, { refreshData: true });
+
+    } else { // MODO ALTA (SIN CAMBIOS)
+        payload.estado = 'Ingresado';
+        await postData({ action:'addBeneficio', ...payload }, {refreshData:true});
     }
-    await fetchData();
-  } else {
-    payload.estado = 'Ingresado';
-    await postData({ action:'addBeneficio', ...payload }, {refreshData:true});
+    showToast('Beneficio guardado con éxito.');
+    $('#caseModal').classList.remove('show');
+  } catch (error) {
+    console.error('Error al guardar:', error);
+    showToast('Error: No se pudo guardar el beneficio.');
+  } finally {
+    saveBtn.textContent = 'Guardar';
+    setFormDisabled(false);
   }
-
-  $('#caseModal').classList.remove('show');
-  saveBtn.textContent = orig; saveBtn.disabled=false; $('#cancelBtn').disabled=false;
 });
 
-$('#id_legajo').addEventListener('change', (e) => {
-    const legajoId = e.target.value;
-    const legajo = getLegajoById(legajoId);
-    $('#interno').value = legajo.nombre_completo || '';
-});
-
-$('#deleteCaseBtn').addEventListener('click', async () => {
-    const id = $('#caseId').value;
-    if (!id) return;
-    if (confirm('¿Está seguro de que desea eliminar este beneficio? Esta acción no se puede deshacer.')) {
-        await postData({ action: 'deleteBeneficio', id_beneficio_legajo: id }, { refreshData: true });
-        $('#caseModal').classList.remove('show');
-        showToast('Beneficio eliminado correctamente.');
-    }
-});
+$('#id_legajo').addEventListener('change', (e) => { const legajoId = e.target.value; const legajo = getLegajoById(legajoId); $('#interno').value = legajo.nombre_completo || ''; });
+$('#deleteCaseBtn').addEventListener('click', async () => { const id = $('#caseId').value; if (!id) return; if (confirm('¿Está seguro de que desea eliminar este beneficio? Esta acción no se puede deshacer.')) { await postData({ action: 'deleteBeneficio', id_beneficio_legajo: id }, { refreshData: true }); $('#caseModal').classList.remove('show'); showToast('Beneficio eliminado correctamente.'); } });
 
 $('#finalizeForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
@@ -1190,20 +879,9 @@ $('#finalizeForm').addEventListener('submit', async (e)=>{
   $('#finalizeModal').classList.remove('show');
   $('#finalizeForm').reset();
 });
-$('#cancelFinalizeBtn').onclick = ()=>{
-  $('#finalizeModal').classList.remove('show');
-  $('#finalizeForm').reset();
-  fetchData();
-};
+$('#cancelFinalizeBtn').onclick = ()=>{ $('#finalizeModal').classList.remove('show'); $('#finalizeForm').reset(); fetchData(); };
 
-$('#searchInput').addEventListener('input', (e)=>{
-  const q = e.target.value.toLowerCase();
-  const filtered = casesData.filter(c=> (c.expediente||'').toLowerCase().includes(q) || (c.interno||'').toLowerCase().includes(q));
-  renderBoard(filtered);
-  renderChart(filtered);
-  calcStats(filtered);
-});
-
+$('#searchInput').addEventListener('input', (e)=>{ const q = e.target.value.toLowerCase(); const filtered = casesData.filter(c=> (c.expediente||'').toLowerCase().includes(q) || (c.interno||'').toLowerCase().includes(q)); renderBoard(filtered); renderChart(filtered); calcStats(filtered); });
 $('#alarmToggle').addEventListener('change', ()=> renderBoard(casesData));
 
 $('#addCaseBtn').addEventListener('click', ()=>{
@@ -1220,34 +898,16 @@ $('#refreshBenefitsBtn').addEventListener('click', ()=> fetchData());
 function showAlert(title, message){ $('#alertTitle').textContent=title; $('#alertMessage').textContent=message; $('#alertModal').classList.add('show'); }
 $('#closeAlertBtn').onclick = ()=> $('#alertModal').classList.remove('show');
 
-function updateCharCounter() {
-    const obsText = $('#observacion');
-    const counter = $('#charCounter');
-    const len = obsText.value.length;
-    if (len > CHAR_LIMIT) {
-        obsText.value = obsText.value.substring(0, CHAR_LIMIT);
-    }
-    counter.textContent = `${obsText.value.length} / ${CHAR_LIMIT}`;
-}
+function updateCharCounter() { const obsText = $('#observacion'); const counter = $('#charCounter'); const len = obsText.value.length; if (len > CHAR_LIMIT) { obsText.value = obsText.value.substring(0, CHAR_LIMIT); } counter.textContent = `${obsText.value.length} / ${CHAR_LIMIT}`; }
 $('#observacion').addEventListener('input', updateCharCounter);
 
 /**********************
  * INICIO
  **********************/
 applyThemeFromStorage();
-
-document.querySelectorAll('.modal-backdrop').forEach(m=>{
-  m.addEventListener('click', (e)=>{
-    if(e.target===m){
-      m.classList.remove('show');
-      if(m.id==='legajoDetailModal') isDetailModalOpen = false;
-    }
-  });
-});
-
+document.querySelectorAll('.modal-backdrop').forEach(m=>{ m.addEventListener('click', (e)=>{ if(e.target===m){ m.classList.remove('show'); if(m.id==='legajoDetailModal') isDetailModalOpen = false; } }); });
 const today = new Date().toISOString().split('T')[0];
 document.querySelectorAll('input[type="date"]').forEach(input => input.max = today);
-
 fetchData();
 
 </script>
