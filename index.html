@@ -342,6 +342,12 @@
               <input type="text" id="interno" name="interno" class="mt-1 block w-full px-3 py-2 border rounded-xl" readonly>
             </div>
           </div>
+
+          <div class="border-t pt-4 mt-4">
+              <label for="observacion" class="block text-sm font-medium">Observaciones del estado actual</label>
+              <textarea id="observacion" name="observacion" rows="3" class="mt-1 block w-full px-3 py-2 border rounded-xl"></textarea>
+              <div id="charCounter" class="text-xs text-right text-gray-500 dark:text-gray-400 mt-1">0 / 255</div>
+          </div>
           
           <div class="border-t pt-4 mt-4">
             <h3 class="text-md font-semibold mb-2">Fechas Clave del Trámite</h3>
@@ -443,6 +449,7 @@
  **********************/
 const googleWebAppUrl = "https://script.google.com/macros/s/AKfycbyeY6uqUypUlY_JZnWxA09ygNdf9wd54LrHPWXSLuhK00nF370qrS1N3t9oZ2Fk5bJU/exec";
 const PASSWORD = "454545"; // ¡ADVERTENCIA DE SEGURIDAD! Esto no es seguro para producción.
+const CHAR_LIMIT = 255;
 
 let allData = { legajos: [], sentencias: [], beneficios: [], tramitesVarios: [] };
 let isAuthenticated = false;
@@ -932,6 +939,7 @@ function hydrateCasesFromBeneficios(beneficios){
     interno: b.interno,
     beneficio: b.beneficio,
     estado: b.estado,
+    observacion: b.Observacion, // <-- CAMBIO: Asegúrate que el nombre de la propiedad coincida con el encabezado de la hoja
     fechaIngreso: b.fechaIngreso,
     fechaEnvioGabinete: b.fechaEnvioGabinete,
     fechaRegresoGabinete: b.fechaRegresoGabinete,
@@ -995,6 +1003,7 @@ function createCardElement(caseItem){
   const textColor = getContrastColor(bgColor);
   const displayDate = caseItem.fechaIngreso ? new Date(caseItem.fechaIngreso).toLocaleDateString() : 'N/A';
   const legajoInfo = caseItem.id_legajo ? `<div class="text-xs mt-1 font-semibold">Legajo: #${caseItem.id_legajo}</div>` : '';
+  const observacionInfo = caseItem.observacion ? `<p class="mt-2 text-xs italic text-gray-600 dark:text-gray-400 border-l-2 border-gray-300 pl-2 truncate" title="${caseItem.observacion}">${caseItem.observacion}</p>` : '';
 
   card.innerHTML = `
     <div class="font-bold text-lg card-text-main">${caseItem.expediente || 'S/N'}</div>
@@ -1004,12 +1013,12 @@ function createCardElement(caseItem){
     <div class="text-xs mt-2 card-dates card-text-secondary">
       <div>Ingreso: ${displayDate}</div>
     </div>
+    ${observacionInfo}
     <div class="finalizado-info">
       ${caseItem.estado==='Finalizado' && caseItem.motivoFinalizado ? `<p class="mt-2 text-xs italic">Motivo: ${caseItem.motivoFinalizado}</p>`:''}
       ${caseItem.estado==='Finalizado' && caseItem.enlaceResolucion ? `<a href="${caseItem.enlaceResolucion}" target="_blank" class="mt-2 inline-block text-xs text-indigo-600 hover:underline">Ver Resolución</a>`:''}
     </div>
   `;
-  // Alarmas simples (ej.: +7 días en “En Gabinete”)
   if (caseItem.estado === 'En Gabinete' && caseItem.fechaEnvioGabinete) {
     const entryDate = new Date(caseItem.fechaEnvioGabinete);
     const days = (Date.now()-entryDate.getTime())/(1000*3600*24);
@@ -1050,30 +1059,38 @@ function setupDragAndDrop(){
       const newStatus = column.dataset.status;
       const oldStatus = draggingCard.closest('.kanban-column').dataset.status;
       if (oldStatus === newStatus) return;
+      
+      const item = casesData.find(c=>c.id==cardId);
+      if (!item) return;
+
       if (newStatus === 'Finalizado') {
         caseIdToFinalize = cardId;
         $('#finalizeModal').classList.add('show');
         return;
       }
+      
       column.querySelector('.card-container').appendChild(draggingCard);
       updateColumnCounter(oldStatus,-1);
       updateColumnCounter(newStatus,1);
-      const item = casesData.find(c=>c.id==cardId);
-      if (item) {
-        item.estado = newStatus;
-        const map = {
-          'Fiscalía':'fechaEnvioFiscalia','Defensoría':'fechaEnvioDefensoria','En Gabinete':'fechaEnvioGabinete',
-          'Regreso':'fechaRegresoGabinete','Para Despacho':'fechaDespacho'
-        };
-        const field = map[newStatus];
-        if (field) {
-          const iso = new Date().toISOString();
-          item[field] = iso;
-          await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:cardId, newStatus }, {refreshData:false});
-          await postData({ action:'updateBeneficioField', id_beneficio_legajo:cardId, field, value: iso }, {refreshData:true});
-        } else {
-          await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:cardId, newStatus }, {refreshData:true});
-        }
+      
+      item.estado = newStatus;
+      item.observacion = ''; // <-- RESETEO DE OBSERVACIÓN
+      
+      // Actualizar backend: resetear observación primero
+      await postData({ action:'updateBeneficioField', id_beneficio_legajo:cardId, field:'Observacion', value: '' }, {refreshData:false});
+      
+      const map = {
+        'Fiscalía':'fechaEnvioFiscalia','Defensoría':'fechaEnvioDefensoria','En Gabinete':'fechaEnvioGabinete',
+        'Regreso':'fechaRegresoGabinete','Para Despacho':'fechaDespacho'
+      };
+      const field = map[newStatus];
+      if (field) {
+        const iso = new Date().toISOString();
+        item[field] = iso;
+        await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:cardId, newStatus }, {refreshData:false});
+        await postData({ action:'updateBeneficioField', id_beneficio_legajo:cardId, field, value: iso }, {refreshData:true});
+      } else {
+        await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:cardId, newStatus }, {refreshData:true});
       }
     });
   });
@@ -1129,7 +1146,6 @@ function populateLegajosDropdown(selectedId = null) {
     });
 }
 
-// Helper para convertir y formatear fechas para inputs
 const toInputDate = (isoString) => {
     if (!isoString) return '';
     try {
@@ -1147,12 +1163,12 @@ function openEditModal(caseItem){
   populateLegajosDropdown(caseItem.id_legajo);
   
   $('#id_legajo').value = caseItem.id_legajo || '';
-  $('#interno').value = caseItem.interno || ''; // Nombre se carga al seleccionar legajo
+  $('#interno').value = caseItem.interno || '';
 
-  // Poblar todos los campos del formulario
   $('#caseId').value = caseItem.id || '';
   $('#expediente').value = caseItem.expediente || '';
   $('#beneficio').value = caseItem.beneficio || 'Otro';
+  $('#observacion').value = caseItem.observacion || '';
   $('#fechaIngreso').value = toInputDate(caseItem.fechaIngreso);
   $('#fechaEnvioGabinete').value = toInputDate(caseItem.fechaEnvioGabinete);
   $('#fechaRegresoGabinete').value = toInputDate(caseItem.fechaRegresoGabinete);
@@ -1163,6 +1179,7 @@ function openEditModal(caseItem){
   $('#motivoFinalizadoEdit').value = caseItem.motivoFinalizado || '';
   $('#enlaceResolucionEdit').value = caseItem.enlaceResolucion || '';
 
+  updateCharCounter(); // Actualizar contador al abrir
   $('#caseModal').classList.add('show');
 }
 
@@ -1181,13 +1198,12 @@ $('#caseForm').addEventListener('submit', async (e)=>{
   const payload = Object.fromEntries(fd.entries());
 
   if (id){ // UPDATE
-    // NOTA: Idealmente, esto se haría en una sola llamada al backend
     for (const [key, value] of Object.entries(payload)) {
         if (key !== 'caseId') {
             await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:key, value }, {refreshData:false});
         }
     }
-    await fetchData(); // Recargar datos al final de todas las actualizaciones
+    await fetchData();
   } else { // ALTA
     payload.estado = 'Ingresado';
     await postData({ action:'addBeneficio', ...payload }, {refreshData:true});
@@ -1197,14 +1213,12 @@ $('#caseForm').addEventListener('submit', async (e)=>{
   saveBtn.textContent = orig; saveBtn.disabled=false; $('#cancelBtn').disabled=false;
 });
 
-// Autocompletar nombre del interno al seleccionar legajo
 $('#id_legajo').addEventListener('change', (e) => {
     const legajoId = e.target.value;
     const legajo = getLegajoById(legajoId);
     $('#interno').value = legajo.nombre_completo || '';
 });
 
-// Eliminar beneficio
 $('#deleteCaseBtn').addEventListener('click', async () => {
     const id = $('#caseId').value;
     if (!id) return;
@@ -1254,8 +1268,9 @@ $('#addCaseBtn').addEventListener('click', ()=>{
   $('#caseForm').reset();
   $('#modalTitle').textContent = 'Agregar Nuevo Trámite';
   $('#caseId').value = '';
-  $('#deleteCaseBtn').classList.add('hidden'); // Ocultar botón de eliminar en modo alta
+  $('#deleteCaseBtn').classList.add('hidden');
   populateLegajosDropdown();
+  updateCharCounter();
   $('#caseModal').classList.add('show');
 });
 $('#refreshBenefitsBtn').addEventListener('click', ()=> fetchData());
@@ -1263,6 +1278,19 @@ $('#refreshBenefitsBtn').addEventListener('click', ()=> fetchData());
 /* Alert modal */
 function showAlert(title, message){ $('#alertTitle').textContent=title; $('#alertMessage').textContent=message; $('#alertModal').classList.add('show'); }
 $('#closeAlertBtn').onclick = ()=> $('#alertModal').classList.remove('show');
+
+/* Contador de caracteres para Observación */
+function updateCharCounter() {
+    const obsText = $('#observacion');
+    const counter = $('#charCounter');
+    const len = obsText.value.length;
+    if (len > CHAR_LIMIT) {
+        obsText.value = obsText.value.substring(0, CHAR_LIMIT);
+    }
+    counter.textContent = `${obsText.value.length} / ${CHAR_LIMIT}`;
+}
+$('#observacion').addEventListener('input', updateCharCounter);
+
 
 /**********************
  * INICIO
