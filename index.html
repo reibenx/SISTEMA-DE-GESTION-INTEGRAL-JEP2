@@ -817,14 +817,12 @@ $('#cancelBtn').onclick = ()=> $('#caseModal').classList.remove('show');
 $('#caseModal').addEventListener('click', (e)=>{ if(e.target===e.currentTarget) e.currentTarget.classList.remove('show'); });
 
 function setFormDisabled(disabled) {
-    const form = $('#caseForm');
     const content = $('#caseModalContent');
     if (disabled) {
         content.classList.add('form-disabled');
     } else {
         content.classList.remove('form-disabled');
     }
-    // Deshabilitar botones de acción también
     $('#saveCaseBtn').disabled = disabled;
     $('#cancelBtn').disabled = disabled;
     $('#deleteCaseBtn').disabled = disabled;
@@ -843,7 +841,7 @@ $('#caseForm').addEventListener('submit', async (e)=>{
   try {
     if (id){ // MODO EDICIÓN (OPTIMIZADO)
         const dataToUpdate = payload;
-        delete dataToUpdate.caseId; // No es necesario enviar el ID dentro del objeto de datos
+        delete dataToUpdate.caseId;
         
         await postData({
             action: 'updateBeneficioCompleto',
@@ -851,15 +849,27 @@ $('#caseForm').addEventListener('submit', async (e)=>{
             data: dataToUpdate
         }, { refreshData: true });
 
-    } else { // MODO ALTA (SIN CAMBIOS)
+    } else { // MODO ALTA (CON NUEVOS CONTROLES)
+        const expediente = (payload.expediente || '').trim();
+        if (expediente && casesData.some(b => b.expediente && b.expediente.trim().toLowerCase() === expediente.toLowerCase())) {
+            showAlert('Error de Duplicado', `El número de expediente "${expediente}" ya existe en el sistema.`);
+            throw new Error('Duplicate expediente'); // Detiene la ejecución
+        }
+
+        if (!confirm("¿Está seguro de que desea guardar este nuevo trámite?")) {
+            throw new Error('User cancelled'); // Detiene la ejecución
+        }
+
         payload.estado = 'Ingresado';
         await postData({ action:'addBeneficio', ...payload }, {refreshData:true});
     }
     showToast('Beneficio guardado con éxito.');
     $('#caseModal').classList.remove('show');
   } catch (error) {
-    console.error('Error al guardar:', error);
-    showToast('Error: No se pudo guardar el beneficio.');
+    if (error.message !== 'Duplicate expediente' && error.message !== 'User cancelled') {
+        console.error('Error al guardar:', error);
+        showToast('Error: No se pudo guardar el beneficio.');
+    }
   } finally {
     saveBtn.textContent = 'Guardar';
     setFormDisabled(false);
@@ -913,5 +923,3 @@ fetchData();
 </script>
 </body>
 </html>
-
-
