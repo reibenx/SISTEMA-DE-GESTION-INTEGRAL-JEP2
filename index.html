@@ -105,7 +105,7 @@
                 <th class="px-4 py-2">Prontuario</th>
                 <th class="px-4 py-2">Nombre</th>
                 <th class="px-4 py-2">Defensor</th>
-                <th class="px-4 py-2">Estado</th>
+                <th class="px-4 py-2">Estado de Cómputo</th>
                 <th class="px-4 py-2">Fin Condena</th>
               </tr>
             </thead>
@@ -203,6 +203,29 @@
     </div>
   </div>
 
+  <!-- Modal: Editar Sentencia -->
+  <div id="editarSentenciaModal" class="modal-backdrop">
+    <div class="modal p-6 w-[760px] max-w-full overflow-y-auto max-h-[90vh]">
+      <h2 class="text-lg font-bold mb-3">Editar Sentencia</h2>
+      <form id="editarSentenciaForm" class="space-y-3">
+        <input type="hidden" name="id_sentencia" id="edit_id_sentencia">
+        <input type="hidden" name="id_legajo" id="edit_id_legajo">
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="text-sm">N° Causa</label><input name="nro_causa" id="edit_nro_causa" class="w-full border px-2 py-2 rounded" required></div>
+          <div><label class="text-sm">Fecha Sentencia</label><input name="fecha_sentencia" id="edit_fecha_sentencia" type="date" class="w-full border px-2 py-2 rounded" required></div>
+          <div class="col-span-2"><label class="text-sm">Delito</label><input name="delito" id="edit_delito" class="w-full border px-2 py-2 rounded" required></div>
+          <div class="col-span-2"><label class="text-sm">Pena impuesta</label><input name="pena_impuesta" id="edit_pena_impuesta" class="w-full border px-2 py-2 rounded" required></div>
+          <div class="col-span-2"><label class="text-sm">Enlace Sentencia</label><input name="enlace_sentencia" id="edit_enlace_sentencia" type="url" class="w-full border px-2 py-2 rounded"></div>
+          <div class="col-span-2 flex items-center gap-3"><input id="edit_es_unificada" name="es_unificada" type="checkbox"><label for="edit_es_unificada" class="text-sm">Es sentencia unificada</label></div>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" id="cancelEditarSentenciaBtn" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal: Detalle de Legajo -->
   <div id="legajoDetailModal" class="modal-backdrop">
     <div class="modal p-6 w-[1040px] max-w-full overflow-y-auto max-h-[95vh]">
@@ -237,6 +260,7 @@
     let isAuthenticated = false;
     let currentLegajoId = null;
     let isDetailModalOpen = false;
+    let currentSentencia = null; // para edición
 
     const $ = sel => document.querySelector(sel);
     const $$ = sel => document.querySelectorAll(sel);
@@ -345,7 +369,6 @@
       renderLegajosTable(allData.legajos || []);
     }
 
-    // Nuevo: control fino del refresco y del modal para evitar reaperturas
     async function postData(payload, {refreshData=true, refreshModal=false} = {}){
       if(!isAuthenticated){ alert('Debes iniciar sesión'); return; }
       await fetch(googleWebAppUrl,{
@@ -355,7 +378,7 @@
       });
       if (refreshData) await fetchData();
       if (refreshModal && isDetailModalOpen && currentLegajoId) {
-        openLegajoDetail(currentLegajoId); // solo si sigue abierto
+        openLegajoDetail(currentLegajoId);
       }
     }
 
@@ -387,7 +410,7 @@
     });
 
     /**********************
-     * MODAL SENTENCIA
+     * MODAL SENTENCIA (nuevo/alta)
      **********************/
     $('#addSentenceBtn').onclick = ()=> $('#ingresarSentenciaModal').classList.add('show');
     $('#cancelIngresoBtn').onclick = ()=> $('#ingresarSentenciaModal').classList.remove('show');
@@ -403,6 +426,51 @@
     };
 
     /**********************
+     * MODAL EDITAR SENTENCIA (nuevo)
+     **********************/
+    const editarSentenciaModal = $('#editarSentenciaModal');
+    $('#cancelEditarSentenciaBtn').onclick = ()=> editarSentenciaModal.classList.remove('show');
+
+    function openEditarSentenciaModal(id_sentencia){
+      currentSentencia = (allData.sentencias||[]).find(s=>s.id_sentencia==id_sentencia);
+      if(!currentSentencia) return;
+      // Prellenar campos
+      $('#edit_id_sentencia').value   = currentSentencia.id_sentencia || '';
+      $('#edit_id_legajo').value      = currentSentencia.id_legajo || '';
+      $('#edit_nro_causa').value      = currentSentencia.nro_causa || '';
+      $('#edit_delito').value         = currentSentencia.delito || '';
+      $('#edit_pena_impuesta').value  = currentSentencia.pena_impuesta || '';
+      const fecha = (currentSentencia.fecha_sentencia||'').toString().slice(0,10);
+      $('#edit_fecha_sentencia').value= fecha || '';
+      $('#edit_enlace_sentencia').value= currentSentencia.enlace_sentencia || '';
+      $('#edit_es_unificada').checked = !!(currentSentencia.es_unificada === true || currentSentencia.es_unificada === 'SI' || currentSentencia.es_unificada === 'true');
+      editarSentenciaModal.classList.add('show');
+    }
+
+    $('#editarSentenciaForm').onsubmit = async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const obj = Object.fromEntries(fd.entries());
+      obj.es_unificada = fd.has('es_unificada');
+      // Actualizamos campo x campo (patrón existente)
+      await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'nro_causa', value:obj.nro_causa},{refreshData:false});
+      await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'delito', value:obj.delito},{refreshData:false});
+      await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'pena_impuesta', value:obj.pena_impuesta},{refreshData:false});
+      await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'fecha_sentencia', value:obj.fecha_sentencia},{refreshData:false});
+      await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'enlace_sentencia', value:obj.enlace_sentencia},{refreshData:false});
+      await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'es_unificada', value:obj.es_unificada},{refreshData:true, refreshModal:true});
+      editarSentenciaModal.classList.remove('show');
+      showToast('Sentencia actualizada');
+    };
+
+    async function deleteSentencia(id_sentencia){
+      if(!isAuthenticated) return alert('Inicia sesión');
+      if(!confirm('¿Eliminar esta sentencia? Esta acción no se puede deshacer.')) return;
+      await postData({action:'deleteSentencia', id_sentencia}, {refreshData:true, refreshModal:true});
+      showToast('Sentencia eliminada');
+    }
+
+    /**********************
      * DETALLE LEGAJO
      **********************/
     const detailModal = $('#legajoDetailModal');
@@ -416,7 +484,6 @@
     function getBeneficiosByLegajo(id){ return (allData.beneficios||[]).filter(b=>b.id_legajo==id); }
     function getTramitesByLegajo(id){ return (allData.tramitesVarios||[]).filter(t=>t.id_legajo==id); }
 
-    // Mapeos estado <-> clave de fechas y orden en timeline
     const stateOrder = ['Pendiente SPP','Provisorio','Enviado a Defensoría','Enviado a Fiscalía','Aprobado'];
     const stateToKey = {
       'Pendiente SPP':'solicitudSPP',
@@ -424,7 +491,7 @@
       'Enviado a Defensoría':'envioDefensoria',
       'Enviado a Fiscalía':'envioFiscalia',
       'Aprobado':'autoAprobacion'
-      // 'Observado' no participa del timeline
+      // Observado queda fuera del timeline
     };
     const steps = [
       { key:'solicitudSPP',     label:'SPP/Defensor' },
@@ -444,14 +511,13 @@
       else { $('#deleteLegajoBtn').classList.add('hidden'); $('#editLegajoBtn').classList.add('hidden'); }
 
       $$('.tab-btn').forEach(b=>b.classList.remove('active'));
-      const infoBtn = $$('.tab-btn')[0]; infoBtn.classList.add('active');
+      $$('.tab-btn')[0].classList.add('active');
 
       const tabContent = $('#tab-content');
 
       function renderTimeline(legRef){
-        // Usamos el estado actual para marcar current y completed
         const currentState = legRef.estado_computo || '';
-        const currentIdx = stateOrder.indexOf(currentState); // -1 si no está
+        const currentIdx = stateOrder.indexOf(currentState);
         let fechas={}; try{ fechas = JSON.parse(legRef.fechas_clave_json||'{}'); }catch(e){}
         return `<div class="timeline">
           ${steps.map((s,i)=>`
@@ -471,6 +537,7 @@
 
       function renderInfoTab(){
         const fin = (leg.fecha_fin_condena||'').toString().slice(0,10);
+        const linkBtn = leg.link_computo ? `<button id="openComputoBtnInfo" class="btn btn-primary mt-3">Abrir Cómputo PDF</button>` : '';
         tabContent.innerHTML = `
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><label class="text-sm">ID Legajo</label><input value="${leg.id_legajo||''}" disabled class="w-full border rounded px-3 py-2 bg-gray-50 dark:bg-[#0f172a]"></div>
@@ -490,20 +557,17 @@
           <div class="mt-6">
             <h3 class="font-semibold mb-2">Línea de tiempo del cómputo</h3>
             <div id="timelineWrap">${renderTimeline(leg)}</div>
-            ${isAuthenticated?`
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mt-3">
-              <button class="btn btn-secondary" onclick="setFechaClave('${leg.id_legajo}','solicitudSPP')">Marcar SPP</button>
-              <button class="btn btn-secondary" onclick="setFechaClave('${leg.id_legajo}','computoProvisorio')">Marcar Provisorio</button>
-              <button class="btn btn-secondary" onclick="updateEstadoYFecha('${leg.id_legajo}','Enviado a Defensoría','envioDefensoria')">Enviar Defensoría</button>
-              <button class="btn btn-secondary" onclick="updateEstadoYFecha('${leg.id_legajo}','Enviado a Fiscalía','envioFiscalia')">Enviar Fiscalía</button>
-              <button class="btn btn-primary"  onclick="updateEstadoYFecha('${leg.id_legajo}','Aprobado','autoAprobacion')">Aprobar</button>
-            </div>`:''}
+            ${linkBtn}
           </div>
 
           ${isAuthenticated?`<div class="mt-5 flex justify-end gap-2">
             <button id="saveLegajoBtn" class="btn btn-primary hidden">Guardar</button>
           </div>`:''}
         `;
+
+        if (leg.link_computo) {
+          $('#openComputoBtnInfo').onclick = ()=> window.open(leg.link_computo, '_blank');
+        }
 
         // Editar (desbloqueo con confirm)
         $('#editLegajoBtn').onclick = ()=>{
@@ -514,33 +578,29 @@
             });
             $('#saveLegajoBtn').classList.remove('hidden');
 
-            // ✅ Cambio inmediato del estado: guarda estado_computo, fecha correspondiente y redibuja timeline
+            // Cambio inmediato del estado: guarda estado_computo + fecha
             $('#editEstado').addEventListener('change', async (ev)=>{
               const newState = ev.target.value;
-              // 1) Actualizar estado_computo
               await postData({ action:'updateComputoEstado', id_legajo:leg.id_legajo, newState }, {refreshData:false, refreshModal:false});
-              // 2) Escribir fecha para el paso correspondiente (si aplica)
               const key = stateToKey[newState];
               if (key){
                 let fechas={}; try{ fechas = JSON.parse(leg.fechas_clave_json||'{}'); }catch(e){}
                 fechas[key] = new Date().toISOString();
                 await postData({ action:'updateLegajoField', id_legajo:leg.id_legajo, field:'fechas_clave_json', value: JSON.stringify(fechas) }, {refreshData:true, refreshModal:true});
               } else {
-                // Estados sin clave (p.ej. Observado)
                 await fetchData();
                 if(isDetailModalOpen) openLegajoDetail(leg.id_legajo);
               }
-            }, { once:true }); // bind una sola vez por sesión de edición
+            }, { once:true });
           }
         };
 
-        // Guardar con confirm + feedback (no reabrir modal si el usuario lo cierra a mitad)
+        // Guardar con confirm + feedback
         $('#saveLegajoBtn').onclick = async ()=>{
           if(!confirm('¿Seguro de guardar los cambios?')) return;
           const btn = $('#saveLegajoBtn');
           btn.textContent = 'Guardando datos...'; btn.disabled = true;
 
-          // Actualizaciones secuenciales, refrescamos una sola vez al final
           await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nro_prontuario',value:$('#editProntuario').value},{refreshData:false});
           await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nombre_completo',value:$('#editNombre').value},{refreshData:false});
           await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'defensor_actual',value:$('#editDefensor').value},{refreshData:false});
@@ -561,27 +621,29 @@
         const sent = getSentenciasByLegajo(id);
         $('#tab-content').innerHTML = sent.length
           ? sent.map(s=>`
-            <div class='p-3 border rounded flex items-center justify-between'>
-              <div>
-                <div class='font-medium'>Causa ${s.nro_causa}</div>
-                <div class='text-sm opacity-80'>${s.delito} • ${s.pena_impuesta} • ${s.fecha_sentencia}</div>
+            <div class='p-3 border rounded flex items-center justify-between gap-3'>
+              <div class='min-w-0'>
+                <div class='font-medium truncate'>Causa ${s.nro_causa}</div>
+                <div class='text-sm opacity-80 truncate'>${s.delito} • ${s.pena_impuesta} • ${ (s.fecha_sentencia||'').toString().slice(0,10) }</div>
               </div>
-              ${s.enlace_sentencia?`<a class='btn btn-secondary' target='_blank' href='${s.enlace_sentencia}'>Ver</a>`:''}
+              <div class='flex items-center gap-2 flex-shrink-0'>
+                ${s.enlace_sentencia?`<a class='btn btn-secondary' target='_blank' href='${s.enlace_sentencia}'>Ver</a>`:''}
+                ${isAuthenticated?`<button class='btn btn-secondary' onclick="openEditarSentenciaModal('${s.id_sentencia}')">Modificar</button>`:''}
+                ${isAuthenticated?`<button class='btn btn-danger' onclick="deleteSentencia('${s.id_sentencia}')">Eliminar</button>`:''}
+              </div>
             </div>`).join('')
           : '<div class="text-sm opacity-70">Sin sentencias.</div>';
       }
 
       function renderComputoTab(){
+        const linkBtn = leg.link_computo ? `<button id="openComputoBtnComp" class="btn btn-primary mt-3">Abrir Cómputo PDF</button>` : '';
         $('#tab-content').innerHTML = `
           <div id="timelineWrap">${renderTimeline(leg)}</div>
-          ${isAuthenticated?`<div class='mt-4 flex flex-wrap gap-2'>
-            <button class='btn btn-secondary' onclick="updateEstadoYFecha('${id}','Pendiente SPP','solicitudSPP')">Marcar SPP</button>
-            <button class='btn btn-secondary' onclick="updateEstadoYFecha('${id}','Provisorio','computoProvisorio')">Marcar Provisorio</button>
-            <button class='btn btn-secondary' onclick="updateEstadoYFecha('${id}','Enviado a Defensoría','envioDefensoria')">Enviar Defensoría</button>
-            <button class='btn btn-secondary' onclick="updateEstadoYFecha('${id}','Enviado a Fiscalía','envioFiscalia')">Enviar Fiscalía</button>
-            <button class='btn btn-primary'  onclick="updateEstadoYFecha('${id}','Aprobado','autoAprobacion')">Aprobar</button>
-          </div>`:''}
+          ${linkBtn}
         `;
+        if (leg.link_computo) {
+          $('#openComputoBtnComp').onclick = ()=> window.open(leg.link_computo, '_blank');
+        }
       }
 
       function renderTramitesTab(){
@@ -625,7 +687,7 @@
       detailModal.classList.add('show');
     }
 
-    // Helpers timeline usables por botones
+    // Helpers timeline usables por botones (aún disponibles si los llamara el backend)
     window.setFechaClave = async function(id, key){
       const leg = (allData.legajos||[]).find(x=>x.id_legajo==id) || {};
       let fechas={}; try{ fechas = JSON.parse(leg.fechas_clave_json||'{}'); }catch(e){}
@@ -690,7 +752,7 @@
 
     function calcStats(beneficios){
       $('#total-activos').textContent = (beneficios||[]).filter(b=>b.estado!=='Finalizado').length;
-      $('#avg-time').textContent = '—'; // Placeholder
+      $('#avg-time').textContent = '—';
     }
 
     let chartInstance = null;
@@ -714,7 +776,7 @@
      **********************/
     applyThemeFromStorage();
 
-    // Cerrar modales al hacer click fuera (y marcar estado abierto/cerrado)
+    // Cerrar modales al hacer click fuera (y marcar estado)
     document.querySelectorAll('.modal-backdrop').forEach(m=>{
       m.addEventListener('click', (e)=>{
         if(e.target===m){
