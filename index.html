@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Gestión Integral de Legajos - Juzgado de Ejecución Penal</title>
 
-  <!-- Tailwind para prototipado -->
+  <!-- Tailwind para prototipado (puedes compilarlo luego para prod) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,14 +15,12 @@
       --color-primary:#1e3a8a;
       --color-secondary:#f3f4f6;
       --color-accent:#2563eb;
-
       --light-bg-general:#e5e7eb;
       --light-bg-content:#ffffff;
       --light-text-main:#111827;
       --light-card-bg:#ffffff;
       --light-card-text-main:#111827;
       --light-card-text-secondary:#6b7280;
-
       --dark-bg-general:#0d1117;
       --dark-bg-content:#161b22;
       --dark-text-main:#f0f6fc;
@@ -44,7 +42,6 @@
     .btn-primary{background:var(--color-accent);color:white}
     .btn-secondary{background:var(--color-secondary);color:#111827}
     .btn-danger{background:#dc2626;color:white}
-
     .tab-btn{padding:0.6rem 1rem;border-radius:.5rem}
     .tab-btn.active{border-bottom:3px solid var(--color-accent);font-weight:600}
 
@@ -86,20 +83,17 @@
     .card-container { max-height: 60vh; overflow-y: auto; padding-right: 8px; flex-grow: 1; }
     .kanban-card { position: relative; background-color: var(--light-card-bg); }
     .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.05); }
-
     .dark .kanban-column, .dark .modal{ background-color: var(--dark-bg-content); border-color: var(--dark-border); }
     .dark .kanban-card { background-color: var(--dark-card-bg); border-color: var(--dark-border); }
-
     .drag-over { background-color: #dbeafe; }
     .dark .drag-over { background-color: #1e3a8a; }
-
     .card-text-main { color: var(--light-card-text-main); }
     .card-text-secondary { color: var(--light-card-text-secondary); }
     .dark .card-text-main { color: var(--dark-card-text-main); }
     .dark .card-text-secondary { color: var(--dark-card-text-secondary); }
     .dragging { opacity: 0.5; transform: rotate(2deg); }
 
-    /* Mejoras visuales */
+    /* Mejoras visuales del panel Beneficios */
     .bg-white-relief{ background:#fff }
     .dark .bg-white-relief{ background:var(--dark-bg-content) }
   </style>
@@ -134,6 +128,7 @@
             <button id="addSentenceBtn" class="btn btn-primary hidden">+ Ingresar Sentencia</button>
           </div>
         </div>
+
         <div class="table-wrap">
           <table class="w-full text-left text-base">
             <thead class="text-xs uppercase bg-gray-50 dark:bg-[#111827]">
@@ -152,14 +147,13 @@
       </div>
     </section>
 
-        <!-- Vista: Beneficios (Monitor integrado) -->
+    <!-- Vista: Beneficios (Monitor integrado) -->
     <section id="view-beneficios" class="hidden">
       <!-- Controles -->
       <div class="relief-border p-4">
         <div class="flex flex-col md:flex-row justify-between items-center gap-3">
           <div class="flex items-center gap-3">
-            <input type="text" id="searchInput" placeholder="Buscar por N° o Interno..."
-              class="w-full md:w-72 px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <input type="text" id="searchInput" placeholder="Buscar por N° o Interno..." class="w-full md:w-72 px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
               <input type="checkbox" id="alarmToggle">
               <span>Alarmas visuales</span>
@@ -188,9 +182,7 @@
       <div id="loader" class="text-center py-10 hidden">
         <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 
-          5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 
-          3 7.938l3-2.647z"></path>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
         <p class="mt-2 text-gray-500">Cargando datos...</p>
       </div>
@@ -239,17 +231,9 @@
           <input id="colorAccent" type="color" class="w-full h-10 border rounded mt-1" value="#2563eb">
         </label>
       </div>
-
-      <!-- 🔹 NUEVO: colores de beneficios -->
-      <div class="col-span-2 mt-4">
-        <h3 class="font-semibold mb-2">Colores de Beneficios</h3>
-        <div id="benefitColorsContainer" class="grid grid-cols-2 gap-2"></div>
-      </div>
-
       <div class="flex items-center justify-between mt-4">
         <div class="flex items-center gap-2">
-          <input id="darkToggle" type="checkbox">
-          <label for="darkToggle" class="text-sm">Usar modo oscuro</label>
+          <input id="darkToggle" type="checkbox"><label for="darkToggle" class="text-sm">Usar modo oscuro</label>
         </div>
         <div class="flex gap-2">
           <button id="resetTheme" class="btn btn-secondary">Restablecer</button>
@@ -265,34 +249,13 @@
       <h2 class="text-lg font-bold mb-3">Ingresar Nueva Sentencia</h2>
       <form id="ingresarSentenciaForm" class="space-y-3">
         <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-sm">ID Legajo (si existe)</label>
-            <input name="id_legajo" class="w-full border px-2 py-2 rounded" placeholder="Dejar vacío para crear legajo nuevo">
-          </div>
-          <div>
-            <label class="text-sm">N° Causa</label>
-            <input name="nro_causa" class="w-full border px-2 py-2 rounded" required>
-          </div>
-          <div>
-            <label class="text-sm">Fecha Sentencia</label>
-            <input name="fecha_sentencia" type="date" class="w-full border px-2 py-2 rounded" required>
-          </div>
-          <div class="col-span-2">
-            <label class="text-sm">Delito</label>
-            <input name="delito" class="w-full border px-2 py-2 rounded" required>
-          </div>
-          <div class="col-span-2">
-            <label class="text-sm">Pena impuesta</label>
-            <input name="pena_impuesta" class="w-full border px-2 py-2 rounded" required>
-          </div>
-          <div class="col-span-2">
-            <label class="text-sm">Enlace Sentencia (opcional)</label>
-            <input name="enlace_sentencia" type="url" class="w-full border px-2 py-2 rounded">
-          </div>
-          <div class="col-span-2 flex items-center gap-3">
-            <input id="es_unificada" name="es_unificada" type="checkbox">
-            <label for="es_unificada" class="text-sm">Es sentencia unificada</label>
-          </div>
+          <div><label class="text-sm">ID Legajo (si existe)</label><input name="id_legajo" class="w-full border px-2 py-2 rounded" placeholder="Dejar vacío para crear legajo nuevo"></div>
+          <div><label class="text-sm">N° Causa</label><input name="nro_causa" class="w-full border px-2 py-2 rounded" required></div>
+          <div><label class="text-sm">Fecha Sentencia</label><input name="fecha_sentencia" type="date" class="w-full border px-2 py-2 rounded" required></div>
+          <div class="col-span-2"><label class="text-sm">Delito</label><input name="delito" class="w-full border px-2 py-2 rounded" required></div>
+          <div class="col-span-2"><label class="text-sm">Pena impuesta</label><input name="pena_impuesta" class="w-full border px-2 py-2 rounded" required></div>
+          <div class="col-span-2"><label class="text-sm">Enlace Sentencia (opcional)</label><input name="enlace_sentencia" type="url" class="w-full border px-2 py-2 rounded"></div>
+          <div class="col-span-2 flex items-center gap-3"><input id="es_unificada" name="es_unificada" type="checkbox"><label for="es_unificada" class="text-sm">Es sentencia unificada</label></div>
         </div>
         <div class="flex justify-end gap-2">
           <button type="button" id="cancelIngresoBtn" class="btn btn-secondary">Cancelar</button>
@@ -301,6 +264,7 @@
       </form>
     </div>
   </div>
+
   <!-- Modal: Editar Sentencia -->
   <div id="editarSentenciaModal" class="modal-backdrop">
     <div class="modal p-6 w-[760px] max-w-full overflow-y-auto max-h-[90vh]">
@@ -309,30 +273,12 @@
         <input type="hidden" name="id_sentencia" id="edit_id_sentencia">
         <input type="hidden" name="id_legajo" id="edit_id_legajo">
         <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-sm">N° Causa</label>
-            <input name="nro_causa" id="edit_nro_causa" class="w-full border px-2 py-2 rounded" required>
-          </div>
-          <div>
-            <label class="text-sm">Fecha Sentencia</label>
-            <input name="fecha_sentencia" id="edit_fecha_sentencia" type="date" class="w-full border px-2 py-2 rounded" required>
-          </div>
-          <div class="col-span-2">
-            <label class="text-sm">Delito</label>
-            <input name="delito" id="edit_delito" class="w-full border px-2 py-2 rounded" required>
-          </div>
-          <div class="col-span-2">
-            <label class="text-sm">Pena impuesta</label>
-            <input name="pena_impuesta" id="edit_pena_impuesta" class="w-full border px-2 py-2 rounded" required>
-          </div>
-          <div class="col-span-2">
-            <label class="text-sm">Enlace Sentencia</label>
-            <input name="enlace_sentencia" id="edit_enlace_sentencia" type="url" class="w-full border px-2 py-2 rounded">
-          </div>
-          <div class="col-span-2 flex items-center gap-3">
-            <input id="edit_es_unificada" name="es_unificada" type="checkbox">
-            <label for="edit_es_unificada" class="text-sm">Es sentencia unificada</label>
-          </div>
+          <div><label class="text-sm">N° Causa</label><input name="nro_causa" id="edit_nro_causa" class="w-full border px-2 py-2 rounded" required></div>
+          <div><label class="text-sm">Fecha Sentencia</label><input name="fecha_sentencia" id="edit_fecha_sentencia" type="date" class="w-full border px-2 py-2 rounded" required></div>
+          <div class="col-span-2"><label class="text-sm">Delito</label><input name="delito" id="edit_delito" class="w-full border px-2 py-2 rounded" required></div>
+          <div class="col-span-2"><label class="text-sm">Pena impuesta</label><input name="pena_impuesta" id="edit_pena_impuesta" class="w-full border px-2 py-2 rounded" required></div>
+          <div class="col-span-2"><label class="text-sm">Enlace Sentencia</label><input name="enlace_sentencia" id="edit_enlace_sentencia" type="url" class="w-full border px-2 py-2 rounded"></div>
+          <div class="col-span-2 flex items-center gap-3"><input id="edit_es_unificada" name="es_unificada" type="checkbox"><label for="edit_es_unificada" class="text-sm">Es sentencia unificada</label></div>
         </div>
         <div class="flex justify-end gap-2">
           <button type="button" id="cancelEditarSentenciaBtn" class="btn btn-secondary">Cancelar</button>
@@ -353,12 +299,14 @@
           <button id="closeDetail" class="btn btn-secondary">Cerrar</button>
         </div>
       </div>
+
       <div class="border-b mb-4 flex gap-4 text-base">
         <button class="tab-btn active" data-tab="info">Datos del Legajo</button>
         <button class="tab-btn" data-tab="sentencias">Sentencias</button>
         <button class="tab-btn" data-tab="computo">Cómputo</button>
         <button class="tab-btn" data-tab="tramites">Trámites/Beneficios</button>
       </div>
+
       <div id="tab-content" class="space-y-4"></div>
     </div>
   </div>
@@ -370,38 +318,21 @@
       <div class="max-h-[70vh] overflow-y-auto pr-2">
         <form id="caseForm" class="space-y-4">
           <input type="hidden" id="caseId" name="caseId">
-
-          <!-- 🔹 Asociación obligatoria al Legajo -->
-          <div>
-            <label class="block text-sm font-medium">Legajo</label>
-            <select id="caseLegajo" name="id_legajo" required
-              class="mt-1 block w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-700">
-              <option value="">Seleccione un legajo</option>
-            </select>
-          </div>
-
           <div>
             <label class="block text-sm font-medium">N° de Expediente</label>
-            <input type="text" id="expediente" name="expediente"
-              class="mt-1 block w-full px-3 py-2 border rounded-xl" required>
+            <input type="text" id="expediente" name="expediente" class="mt-1 block w-full px-3 py-2 border rounded-xl" required>
           </div>
-
           <div>
             <label class="block text-sm font-medium">Nombre del Interno/a</label>
-            <input type="text" id="interno" name="interno"
-              class="mt-1 block w-full px-3 py-2 border rounded-xl" required>
+            <input type="text" id="interno" name="interno" class="mt-1 block w-full px-3 py-2 border rounded-xl" required>
           </div>
-
           <div>
             <label class="block text-sm font-medium">Fecha de Ingreso</label>
-            <input type="date" id="fechaIngreso" name="fechaIngreso"
-              class="mt-1 block w-full px-3 py-2 border rounded-xl" required>
+            <input type="date" id="fechaIngreso" name="fechaIngreso" class="mt-1 block w-full px-3 py-2 border rounded-xl" required>
           </div>
-
           <div>
             <label class="block text-sm font-medium">Tipo de Beneficio</label>
-            <select id="beneficio" name="beneficio"
-              class="mt-1 block w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-700" required>
+            <select id="beneficio" name="beneficio" class="mt-1 block w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-700" required>
               <option>Salidas Transitorias</option>
               <option>Prisión Domiciliaria</option>
               <option>Estímulo Educativo</option>
@@ -412,29 +343,29 @@
             </select>
           </div>
 
-          <!-- 🔹 Campos de Finalización -->
+          <!-- Campo dinámico de fecha de estado -->
+          <div id="stateDateContainer" class="hidden border-t pt-4 mt-2">
+            <label id="stateDateEditLabel" for="stateDateEdit" class="block text-sm font-medium">Fecha de Estado</label>
+            <input type="date" id="stateDateEdit" name="stateDateEdit" class="mt-1 block w-full px-3 py-2 border rounded-xl">
+            <input type="hidden" id="stateDateField" name="stateDateField">
+          </div>
+
+          <!-- Campos de Finalización (solo si estado = Finalizado) -->
           <div id="finalizeFieldsContainer" class="hidden border-t pt-4 mt-2">
             <div>
               <label class="block text-sm font-medium">Motivo de Finalización</label>
-              <textarea id="motivoFinalizadoEdit" rows="3"
-                class="mt-1 block w-full px-3 py-2 border rounded-xl"></textarea>
+              <textarea id="motivoFinalizadoEdit" rows="3" class="mt-1 block w-full px-3 py-2 border rounded-xl"></textarea>
             </div>
             <div>
               <label class="block text-sm font-medium">Enlace a Resolución</label>
-              <input type="url" id="enlaceResolucionEdit" placeholder="https://..."
-                class="mt-1 block w-full px-3 py-2 border rounded-xl">
+              <input type="url" id="enlaceResolucionEdit" placeholder="https://..." class="mt-1 block w-full px-3 py-2 border rounded-xl">
             </div>
           </div>
         </form>
       </div>
-      <div class="flex justify-between items-center pt-4">
-        <!-- 🔹 Botón eliminar -->
-        <button type="button" id="deleteCaseBtn" class="btn btn-danger hidden">Eliminar</button>
-        <div class="flex gap-2">
-          <button type="button" id="cancelBtn" class="btn btn-secondary">Cancelar</button>
-          <button type="submit" form="caseForm" id="saveCaseBtn"
-            class="btn btn-primary w-36 flex justify-center items-center">Guardar</button>
-        </div>
+      <div class="flex justify-end gap-2 pt-4">
+        <button type="button" id="cancelBtn" class="btn btn-secondary">Cancelar</button>
+        <button type="submit" form="caseForm" id="saveCaseBtn" class="btn btn-primary w-36 flex justify-center items-center">Guardar</button>
       </div>
     </div>
   </div>
@@ -447,13 +378,11 @@
         <input type="hidden" id="finalizeCaseId">
         <div>
           <label class="block text-sm font-medium">Motivo / Razón de Finalización</label>
-          <textarea id="motivoFinalizado" rows="3"
-            class="mt-1 block w-full px-3 py-2 border rounded-xl" required></textarea>
+          <textarea id="motivoFinalizado" rows="3" class="mt-1 block w-full px-3 py-2 border rounded-xl" required></textarea>
         </div>
         <div>
           <label class="block text-sm font-medium">Enlace a Resolución (Opcional)</label>
-          <input type="url" id="enlaceResolucion" placeholder="https://..."
-            class="mt-1 block w-full px-3 py-2 border rounded-xl">
+          <input type="url" id="enlaceResolucion" placeholder="https://..." class="mt-1 block w-full px-3 py-2 border rounded-xl">
         </div>
         <div class="flex justify-end gap-2">
           <button type="button" id="cancelFinalizeBtn" class="btn btn-secondary">Cancelar</button>
@@ -474,398 +403,864 @@
     </div>
   </div>
 
-    <footer class="text-center py-8 mt-8 border-t border-gray-200 dark:border-gray-700">
+  <footer class="text-center py-8 mt-8 border-t border-gray-200 dark:border-gray-700">
     <p class="text-sm text-gray-500">By create RBM 2025</p>
   </footer>
 
-  <script>
-  /**********************
-   * CONFIG
-   **********************/
-  const googleWebAppUrl = "https://script.google.com/macros/s/AKfycbxWByUh6NTMZAykR91XIgU1ZUIpF64eg4cJTDL8q4pJSelVi6MwawAvHpfWdYmqW_g/exec";
-  const PASSWORD = "454545";
-  let allData = { legajos: [], sentencias: [], beneficios: [], tramitesVarios: [] };
-  let isAuthenticated = false;
-  let currentLegajoId = null;
-  let isDetailModalOpen = false;
-  let currentSentencia = null;
+<script>
+/**********************
+ * CONFIG
+ **********************/
+const googleWebAppUrl = "https://script.google.com/macros/s/AKfycbyeY6uqUypUlY_JZnWxA09ygNdf9wd54LrHPWXSLuhK00nF370qrS1N3t9oZ2Fk5bJU/exec";
+const PASSWORD = "454545";
 
-  const $ = sel => document.querySelector(sel);
-  const $$ = sel => document.querySelectorAll(sel);
+let allData = { legajos: [], sentencias: [], beneficios: [], tramitesVarios: [] };
+let isAuthenticated = false;
+let currentLegajoId = null;
+let isDetailModalOpen = false;
+let currentSentencia = null;
 
-  /**********************
-   * THEME / SETTINGS
-   **********************/
-  function applyThemeFromStorage(){
-    const p = localStorage.getItem('theme_primary');
-    const a = localStorage.getItem('theme_accent');
-    const d = localStorage.getItem('theme_dark')==='1';
-    if(p) document.documentElement.style.setProperty('--color-primary', p);
-    if(a) document.documentElement.style.setProperty('--color-accent', a);
-    if(d) $('#body').classList.add('dark');
+const $ = sel => document.querySelector(sel);
+const $$ = sel => document.querySelectorAll(sel);
+
+/**********************
+ * THEME / SETTINGS
+ **********************/
+function applyThemeFromStorage(){
+  const p = localStorage.getItem('theme_primary');
+  const a = localStorage.getItem('theme_accent');
+  const d = localStorage.getItem('theme_dark')==='1';
+  if(p) document.documentElement.style.setProperty('--color-primary', p);
+  if(a) document.documentElement.style.setProperty('--color-accent', a);
+  if(d) $('#body').classList.add('dark');
+}
+function showToast(msg, ms=2000){
+  const t = $('#toast'), tx = $('#toastText');
+  tx.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(()=>{ t.style.display='none'; }, ms);
+}
+$('#themeToggle').addEventListener('click', ()=>{
+  const bodyEl = $('#body');
+  bodyEl.classList.toggle('dark');
+  localStorage.setItem('theme_dark', bodyEl.classList.contains('dark')?'1':'0');
+});
+$('#settingsBtn').onclick = ()=>{
+  $('#settingsModal').classList.add('show');
+  $('#colorPrimary').value = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#1e3a8a';
+  $('#colorAccent').value  = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() || '#2563eb';
+  $('#darkToggle').checked = $('#body').classList.contains('dark');
+};
+$('#closeSettings').onclick = ()=> $('#settingsModal').classList.remove('show');
+$('#resetTheme').onclick = ()=>{
+  localStorage.removeItem('theme_primary');
+  localStorage.removeItem('theme_accent');
+  localStorage.removeItem('theme_dark');
+  document.documentElement.style.setProperty('--color-primary','#1e3a8a');
+  document.documentElement.style.setProperty('--color-accent','#2563eb');
+  $('#body').classList.remove('dark');
+};
+$('#saveTheme').onclick = ()=>{
+  const p = $('#colorPrimary').value;
+  const a = $('#colorAccent').value;
+  const d = $('#darkToggle').checked;
+  document.documentElement.style.setProperty('--color-primary', p);
+  document.documentElement.style.setProperty('--color-accent', a);
+  localStorage.setItem('theme_primary', p);
+  localStorage.setItem('theme_accent', a);
+  localStorage.setItem('theme_dark', d?'1':'0');
+  d? $('#body').classList.add('dark') : $('#body').classList.remove('dark');
+  $('#settingsModal').classList.remove('show');
+  showToast('Preferencias guardadas');
+};
+
+/**********************
+ * NAV / AUTH
+ **********************/
+$('#nav-legajos').onclick = ()=>{
+  $('#view-legajos').classList.remove('hidden');
+  $('#view-beneficios').classList.add('hidden');
+};
+$('#nav-beneficios').onclick = ()=>{
+  $('#view-legajos').classList.add('hidden');
+  $('#view-beneficios').classList.remove('hidden');
+  // refrescar tablero al entrar
+  renderBoard(casesData);
+  renderChart(casesData);
+  calcStats(casesData);
+};
+
+const loginModal = $('#loginModal');
+$('#authBtn').onclick = ()=>{
+  if(isAuthenticated){
+    isAuthenticated=false;
+    $('#authBtn').textContent='Iniciar Sesión';
+    $('#addSentenceBtn').classList.add('hidden');
+    $('#addCaseBtn').classList.add('hidden');
+    showToast('Sesión finalizada');
+    renderBoard(casesData);
+  } else {
+    loginModal.classList.add('show');
   }
-
-  function showToast(msg, ms=2000){
-    const t = $('#toast'), tx = $('#toastText');
-    tx.textContent = msg;
-    t.style.display = 'block';
-    setTimeout(()=>{ t.style.display='none'; }, ms);
+};
+$('#cancelLoginBtn').onclick = ()=> loginModal.classList.remove('show');
+$('#loginForm').onsubmit = (e)=>{
+  e.preventDefault();
+  if($('#password').value === PASSWORD){
+    isAuthenticated = true;
+    $('#authBtn').textContent = 'Cerrar Sesión';
+    $('#addSentenceBtn').classList.remove('hidden');
+    $('#addCaseBtn').classList.remove('hidden');
+    loginModal.classList.remove('show');
+    $('#loginError').classList.add('hidden');
+    showToast('Sesión iniciada');
+    renderBoard(casesData);
+  } else {
+    $('#loginError').classList.remove('hidden');
   }
+};
 
-  $('#themeToggle').addEventListener('click', ()=>{
-    const bodyEl = $('#body');
-    bodyEl.classList.toggle('dark');
-    localStorage.setItem('theme_dark', bodyEl.classList.contains('dark')?'1':'0');
-  });
-
-  $('#settingsBtn').onclick = ()=>{
-    $('#settingsModal').classList.add('show');
-    $('#colorPrimary').value = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#1e3a8a';
-    $('#colorAccent').value = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() || '#2563eb';
-    $('#darkToggle').checked = $('#body').classList.contains('dark');
-
-    // 🔹 generar pickers de colores de beneficios
-    const container = $('#benefitColorsContainer');
-    container.innerHTML = '';
-    Object.entries(benefitColors).forEach(([k,v])=>{
-      const wrap = document.createElement('div');
-      wrap.innerHTML = `
-        <label class="text-xs">${k}
-          <input type="color" data-benefit="${k}" value="${v}" class="w-full h-8 border rounded mt-1">
-        </label>`;
-      container.appendChild(wrap);
-    });
-  };
-
-  $('#closeSettings').onclick = ()=> $('#settingsModal').classList.remove('show');
-
-  $('#resetTheme').onclick = ()=>{
-    localStorage.removeItem('theme_primary');
-    localStorage.removeItem('theme_accent');
-    localStorage.removeItem('theme_dark');
-    localStorage.removeItem('benefitColors');
-    document.documentElement.style.setProperty('--color-primary','#1e3a8a');
-    document.documentElement.style.setProperty('--color-accent','#2563eb');
-    $('#body').classList.remove('dark');
-    benefitColors = {...DEFAULT_BENEFIT_COLORS};
-  };
-
-  $('#saveTheme').onclick = ()=>{
-    const p = $('#colorPrimary').value;
-    const a = $('#colorAccent').value;
-    const d = $('#darkToggle').checked;
-    document.documentElement.style.setProperty('--color-primary', p);
-    document.documentElement.style.setProperty('--color-accent', a);
-    localStorage.setItem('theme_primary', p);
-    localStorage.setItem('theme_accent', a);
-    localStorage.setItem('theme_dark', d?'1':'0');
-    d? $('#body').classList.add('dark') : $('#body').classList.remove('dark');
-
-    // guardar colores de beneficios
-    const inputs = $('#benefitColorsContainer').querySelectorAll('input[type=color]');
-    inputs.forEach(inp=>{
-      benefitColors[inp.dataset.benefit] = inp.value;
-    });
-    localStorage.setItem('benefitColors', JSON.stringify(benefitColors));
-
-    $('#settingsModal').classList.remove('show');
-    showToast('Preferencias guardadas');
-  };
-
-  /**********************
-   * NAV / AUTH
-   **********************/
-  $('#nav-legajos').onclick = ()=>{
-    $('#view-legajos').classList.remove('hidden');
-    $('#view-beneficios').classList.add('hidden');
-  };
-
-  $('#nav-beneficios').onclick = ()=>{
-    $('#view-legajos').classList.add('hidden');
-    $('#view-beneficios').classList.remove('hidden');
+/**********************
+ * DATA (GET / POST)
+ **********************/
+async function fetchData(){
+  const res = await fetch(googleWebAppUrl);
+  allData = await res.json();
+  renderLegajosTable(allData.legajos || []);
+  hydrateCasesFromBeneficios(allData.beneficios || []);
+  // si estamos viendo beneficios, refrescar tablero
+  if (!$('#view-beneficios').classList.contains('hidden')) {
     renderBoard(casesData);
     renderChart(casesData);
     calcStats(casesData);
-  };
-
-  const loginModal = $('#loginModal');
-  $('#authBtn').onclick = ()=>{
-    if(isAuthenticated){
-      isAuthenticated=false;
-      $('#authBtn').textContent='Iniciar Sesión';
-      $('#addSentenceBtn').classList.add('hidden');
-      $('#addCaseBtn').classList.add('hidden');
-      showToast('Sesión finalizada');
-      renderBoard(casesData);
-    } else {
-      loginModal.classList.add('show');
-    }
-  };
-
-  $('#cancelLoginBtn').onclick = ()=> loginModal.classList.remove('show');
-
-  $('#loginForm').onsubmit = (e)=>{
-    e.preventDefault();
-    if($('#password').value === PASSWORD){
-      isAuthenticated = true;
-      $('#authBtn').textContent = 'Cerrar Sesión';
-      $('#addSentenceBtn').classList.remove('hidden');
-      $('#addCaseBtn').classList.remove('hidden');
-      loginModal.classList.remove('show');
-      $('#loginError').classList.add('hidden');
-      showToast('Sesión iniciada');
-      renderBoard(casesData);
-    } else {
-      $('#loginError').classList.remove('hidden');
-    }
-  };
-
-  /**********************
-   * DATA (GET / POST)
-   **********************/
-  async function fetchData(){
-    const res = await fetch(googleWebAppUrl);
-    allData = await res.json();
-    renderLegajosTable(allData.legajos || []);
-    hydrateCasesFromBeneficios(allData.beneficios || []);
-    if (!$('#view-beneficios').classList.contains('hidden')) {
-      renderBoard(casesData);
-      renderChart(casesData);
-      calcStats(casesData);
-    }
-    // 🔹 actualizar select de legajos
-    populateLegajosSelect();
   }
+}
 
-  async function postData(payload, {refreshData=true, refreshModal=false} = {}){
-    if(!isAuthenticated){
-      alert('Debes iniciar sesión');
-      return;
-    }
-    await fetch(googleWebAppUrl,{
-      method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:'data='+encodeURIComponent(JSON.stringify({...payload,password:PASSWORD}))
-    });
-    if (refreshData) await fetchData();
-    if (refreshModal && isDetailModalOpen && currentLegajoId) {
-      openLegajoDetail(currentLegajoId);
-    }
-  }
-
-  /**********************
-   * LISTADO LEGAJOS
-   **********************/
-  function renderLegajosTable(legajos){
-    const tbody=$("#legajosTableBody");
-    tbody.innerHTML="";
-    (legajos||[]).forEach(l=>{
-      const tr=document.createElement("tr");
-      tr.className="border-b hover:bg-gray-50 dark:hover:bg-[#0f172a] cursor-pointer";
-      const fin = (l.fecha_fin_condena||'').toString().slice(0,10);
-      tr.innerHTML = `
-        <td class='px-4 py-3'>${l.id_legajo}</td>
-        <td class='px-4 py-3'>${l.nro_prontuario||''}</td>
-        <td class='px-4 py-3'>${l.nombre_completo||''}</td>
-        <td class='px-4 py-3'>${l.defensor_actual||''}</td>
-        <td class='px-4 py-3'>${l.estado_computo||''}</td>
-        <td class='px-4 py-3'>${fin}</td>
-      `;
-      tr.onclick = ()=> openLegajoDetail(l.id_legajo);
-      tbody.appendChild(tr);
-    });
-  }
-
-  $('#searchLegajosInput').addEventListener('input', (e)=>{
-    const q = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll('#legajosTableBody tr');
-    rows.forEach(r=>{
-      r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
-    });
+async function postData(payload, {refreshData=true, refreshModal=false} = {}){
+  if(!isAuthenticated){ alert('Debes iniciar sesión'); return; }
+  await fetch(googleWebAppUrl,{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'data='+encodeURIComponent(JSON.stringify({...payload,password:PASSWORD}))
   });
+  if (refreshData) await fetchData();
+  if (refreshModal && isDetailModalOpen && currentLegajoId) {
+    openLegajoDetail(currentLegajoId);
+  }
+}
 
-      /**********************
-   * MODAL SENTENCIA (nuevo/alta)
-   **********************/
-  $('#addSentenceBtn').onclick = ()=> $('#ingresarSentenciaModal').classList.add('show');
-  $('#cancelIngresoBtn').onclick = ()=> $('#ingresarSentenciaModal').classList.remove('show');
+/**********************
+ * LISTADO LEGAJOS
+ **********************/
+function renderLegajosTable(legajos){
+  const tbody=$("#legajosTableBody"); tbody.innerHTML="";
+  (legajos||[]).forEach(l=>{
+    const tr=document.createElement("tr");
+    tr.className="border-b hover:bg-gray-50 dark:hover:bg-[#0f172a] cursor-pointer";
+    const fin = (l.fecha_fin_condena||'').toString().slice(0,10);
+    tr.innerHTML = `
+      <td class='px-4 py-3'>${l.id_legajo}</td>
+      <td class='px-4 py-3'>${l.nro_prontuario||''}</td>
+      <td class='px-4 py-3'>${l.nombre_completo||''}</td>
+      <td class='px-4 py-3'>${l.defensor_actual||''}</td>
+      <td class='px-4 py-3'>${l.estado_computo||''}</td>
+      <td class='px-4 py-3'>${fin}</td>
+    `;
+    tr.onclick = ()=> openLegajoDetail(l.id_legajo);
+    tbody.appendChild(tr);
+  });
+}
+$('#searchLegajosInput').addEventListener('input', (e)=>{
+  const q = e.target.value.toLowerCase();
+  const rows = document.querySelectorAll('#legajosTableBody tr');
+  rows.forEach(r=>{ r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+});
 
-  $('#ingresarSentenciaForm').onsubmit = async (e)=>{
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const payload = Object.fromEntries(fd.entries());
-    payload.es_unificada = fd.has('es_unificada');
-    payload.action = payload.id_legajo ? 'addSentencia' : 'addLegajoYsentencia';
-    await postData(payload, {refreshData:true});
-    $('#ingresarSentenciaModal').classList.remove('show');
-    showToast('Sentencia guardada');
-  };
+/**********************
+ * MODAL SENTENCIA (nuevo/alta)
+ **********************/
+$('#addSentenceBtn').onclick = ()=> $('#ingresarSentenciaModal').classList.add('show');
+$('#cancelIngresoBtn').onclick = ()=> $('#ingresarSentenciaModal').classList.remove('show');
+$('#ingresarSentenciaForm').onsubmit = async (e)=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const payload = Object.fromEntries(fd.entries());
+  payload.es_unificada = fd.has('es_unificada');
+  payload.action = payload.id_legajo ? 'addSentencia' : 'addLegajoYsentencia';
+  await postData(payload, {refreshData:true, refreshModal:false});
+  $('#ingresarSentenciaModal').classList.remove('show');
+  showToast('Sentencia guardada');
+};
 
-  /**********************
-   * DETALLE LEGAJO (abre modal)
-   **********************/
-  function openLegajoDetail(id){
-    currentLegajoId=id;
-    isDetailModalOpen = true;
-    const leg = (allData.legajos||[]).find(x=>x.id_legajo==id) || {};
-    $('#detailTitle').textContent = `${leg.nombre_completo||'Legajo'} — ${id}`;
+/**********************
+ * MODAL EDITAR SENTENCIA
+ **********************/
+const editarSentenciaModal = $('#editarSentenciaModal');
+$('#cancelEditarSentenciaBtn').onclick = ()=> editarSentenciaModal.classList.remove('show');
 
-    detailModal.classList.add('show');
+function openEditarSentenciaModal(id_sentencia){
+  currentSentencia = (allData.sentencias||[]).find(s=>s.id_sentencia==id_sentencia);
+  if(!currentSentencia) return;
+  $('#edit_id_sentencia').value   = currentSentencia.id_sentencia || '';
+  $('#edit_id_legajo').value      = currentSentencia.id_legajo || '';
+  $('#edit_nro_causa').value      = currentSentencia.nro_causa || '';
+  $('#edit_delito').value         = currentSentencia.delito || '';
+  $('#edit_pena_impuesta').value  = currentSentencia.pena_impuesta || '';
+  const fecha = (currentSentencia.fecha_sentencia||'').toString().slice(0,10);
+  $('#edit_fecha_sentencia').value= fecha || '';
+  $('#edit_enlace_sentencia').value= currentSentencia.enlace_sentencia || '';
+  $('#edit_es_unificada').checked = !!(currentSentencia.es_unificada === true || currentSentencia.es_unificada === 'SI' || currentSentencia.es_unificada === 'true');
+  editarSentenciaModal.classList.add('show');
+}
+
+$('#editarSentenciaForm').onsubmit = async (e)=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const obj = Object.fromEntries(fd.entries());
+  obj.es_unificada = fd.has('es_unificada');
+  await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'nro_causa', value:obj.nro_causa},{refreshData:false});
+  await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'delito', value:obj.delito},{refreshData:false});
+  await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'pena_impuesta', value:obj.pena_impuesta},{refreshData:false});
+  await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'fecha_sentencia', value:obj.fecha_sentencia},{refreshData:false});
+  await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'enlace_sentencia', value:obj.enlace_sentencia},{refreshData:false});
+  await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'es_unificada', value:obj.es_unificada},{refreshData:true, refreshModal:true});
+  editarSentenciaModal.classList.remove('show');
+  showToast('Sentencia actualizada');
+};
+
+async function deleteSentencia(id_sentencia){
+  if(!isAuthenticated) return alert('Inicia sesión');
+  if(!confirm('¿Eliminar esta sentencia? Esta acción no se puede deshacer.')) return;
+  await postData({action:'deleteSentencia', id_sentencia}, {refreshData:true, refreshModal:true});
+  showToast('Sentencia eliminada');
+}
+
+/**********************
+ * DETALLE LEGAJO
+ **********************/
+const detailModal = $('#legajoDetailModal');
+$('#closeDetail').onclick = ()=>{
+  detailModal.classList.remove('show');
+  isDetailModalOpen = false;
+};
+function getLegajoById(id){ return (allData.legajos||[]).find(x=>x.id_legajo==id) || {}; }
+function getSentenciasByLegajo(id){ return (allData.sentencias||[]).filter(s=>s.id_legajo==id); }
+function getBeneficiosByLegajo(id){ return (allData.beneficios||[]).filter(b=>b.id_legajo==id); }
+function getTramitesByLegajo(id){ return (allData.tramitesVarios||[]).filter(t=>t.id_legajo==id); }
+
+const stateOrder = ['Pendiente SPP','Provisorio','Enviado a Defensoría','Enviado a Fiscalía','Aprobado'];
+const stateToKey = {
+  'Pendiente SPP':'solicitudSPP',
+  'Provisorio':'computoProvisorio',
+  'Enviado a Defensoría':'envioDefensoria',
+  'Enviado a Fiscalía':'envioFiscalia',
+  'Aprobado':'autoAprobacion'
+};
+const steps = [
+  { key:'solicitudSPP',     label:'SPP/Defensor' },
+  { key:'computoProvisorio',label:'Provisorio' },
+  { key:'envioDefensoria',  label:'Defensoría' },
+  { key:'envioFiscalia',    label:'Fiscalía' },
+  { key:'autoAprobacion',   label:'Aprobación' }
+];
+
+function openLegajoDetail(id){
+  currentLegajoId=id;
+  isDetailModalOpen = true;
+  const leg = getLegajoById(id);
+
+  $('#detailTitle').textContent = `${leg.nombre_completo||'Legajo'} — ${id}`;
+  if(isAuthenticated){ $('#deleteLegajoBtn').classList.remove('hidden'); $('#editLegajoBtn').classList.remove('hidden'); }
+  else { $('#deleteLegajoBtn').classList.add('hidden'); $('#editLegajoBtn').classList.add('hidden'); }
+
+  $$('.tab-btn').forEach(b=>b.classList.remove('active'));
+  $$('.tab-btn')[0].classList.add('active');
+
+  const tabContent = $('#tab-content');
+
+  function renderTimeline(legRef){
+    const currentState = legRef.estado_computo || '';
+    const currentIdx = stateOrder.indexOf(currentState);
+    let fechas={}; try{ fechas = JSON.parse(legRef.fechas_clave_json||'{}'); }catch(e){}
+    return `<div class="timeline">
+      ${steps.map((s,i)=>`
+        <div class="tl-step">
+          <div class="tl-dot
+            ${currentIdx>-1 && i<currentIdx ? 'completed' : ''}
+            ${currentIdx===i ? 'current' : ''}"></div>
+          <div class="text-xs">${s.label}</div>
+          <div class="text-[11px] ${fechas[s.key]?'':'text-gray-400'}">
+            ${fechas[s.key]? new Date(fechas[s.key]).toLocaleDateString(): '—'}
+          </div>
+        </div>
+        ${i<steps.length-1?`<div class="tl-line ${(currentIdx>-1 && i<currentIdx)?'active':''}"></div>`:''}
+      `).join('')}
+    </div>`;
   }
 
-  /**********************
-   * BENEFICIOS / KANBAN
-   **********************/
-  const KANBAN_COLUMNS = [
-    'Ingresado','En Gabinete','Regreso','Fiscalía',
-    'Defensoría','Para Despacho','Finalizado'
-  ];
+  function renderInfoTab(){
+    const fin = (leg.fecha_fin_condena||'').toString().slice(0,10);
+    const linkBtn = leg.link_computo ? `<button id="openComputoBtnInfo" class="btn btn-primary mt-3">Abrir Cómputo PDF</button>` : '';
+    tabContent.innerHTML = `
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><label class="text-sm">ID Legajo</label><input value="${leg.id_legajo||''}" disabled class="w-full border rounded px-3 py-2 bg-gray-50 dark:bg-[#0f172a]"></div>
+        <div><label class="text-sm">N° Prontuario</label><input id="editProntuario" value="${leg.nro_prontuario||''}" class="w-full border rounded px-3 py-2" disabled></div>
+        <div><label class="text-sm">Nombre Completo</label><input id="editNombre" value="${leg.nombre_completo||''}" class="w-full border rounded px-3 py-2" disabled></div>
+        <div><label class="text-sm">Defensor Actual</label><input id="editDefensor" value="${leg.defensor_actual||''}" class="w-full border rounded px-3 py-2" disabled></div>
+        <div><label class="text-sm">Fiscal Actual</label><input id="editFiscal" value="${leg.fiscal_actual||''}" class="w-full border rounded px-3 py-2" disabled></div>
+        <div><label class="text-sm">Estado Cómputo</label>
+          <select id="editEstado" class="w-full border rounded px-3 py-2" disabled>
+            ${['Pendiente SPP','Provisorio','Enviado a Defensoría','Enviado a Fiscalía','Aprobado','Observado'].map(v=>`<option ${v===(leg.estado_computo||'')?'selected':''}>${v}</option>`).join('')}
+          </select>
+        </div>
+        <div><label class="text-sm">Fecha Fin Condena</label><input id="editFin" type="date" value="${fin}" class="w-full border rounded px-3 py-2" disabled></div>
+        <div><label class="text-sm">Link Cómputo</label><input id="editLink" type="url" value="${leg.link_computo||''}" class="w-full border rounded px-3 py-2" disabled></div>
+      </div>
 
-  const DEFAULT_BENEFIT_COLORS = {
-    'Salidas Transitorias':'#dbeafe',
-    'Prisión Domiciliaria':'#d1fae5',
-    'Estímulo Educativo':'#e9d5ff',
-    'Libertad Asistida':'#ccfbf1',
-    'Libertad Condicional':'#e0e7ff',
-    'Régimen Preparatorio':'#fce7f3',
-    'Otro':'#f3f4f6'
-  };
+      <div class="mt-6">
+        <h3 class="font-semibold mb-2">Línea de tiempo del cómputo</h3>
+        <div id="timelineWrap">${renderTimeline(leg)}</div>
+        ${linkBtn}
+      </div>
 
-  let benefitColors = JSON.parse(localStorage.getItem('benefitColors') || 'null') || {...DEFAULT_BENEFIT_COLORS};
-  let casesData = [];
-  let caseIdToFinalize = null;
-
-  function hydrateCasesFromBeneficios(beneficios){
-    casesData = (beneficios||[]).map(b=>({
-      id: b.id_beneficio_legajo,
-      id_legajo: b.id_legajo,
-      expediente: b.expediente,
-      interno: b.interno,
-      beneficio: b.beneficio,
-      estado: b.estado,
-      fechaIngreso: b.fechaIngreso,
-      fechaFinalizado: b.fechaFinalizado,
-      motivoFinalizado: b.motivoFinalizado,
-      enlaceResolucion: b.enlaceResolucion
-    }));
-  }
-
-  function populateLegajosSelect(){
-    const sel = $('#caseLegajo');
-    if(!sel) return;
-    sel.innerHTML = '<option value="">Seleccione un legajo</option>';
-    (allData.legajos||[]).forEach(l=>{
-      const opt = document.createElement('option');
-      opt.value = l.id_legajo;
-      opt.textContent = `${l.nombre_completo} — Legajo #${l.id_legajo}`;
-      sel.appendChild(opt);
-    });
-  }
-
-  function renderBoard(data){
-    const board = $('#kanban-board');
-    board.innerHTML = '';
-    KANBAN_COLUMNS.forEach(status=>{
-      const col = document.createElement('div');
-      col.className = 'rounded-xl p-4 kanban-column relief-border';
-      col.dataset.status = status;
-      col.innerHTML = `
-        <h2 class="font-bold text-lg mb-4 dark:text-white">${status}</h2>
-        <div class="space-y-3 card-container"></div>
-      `;
-      board.appendChild(col);
-    });
-
-    (data||[]).forEach(item=>{
-      const col = board.querySelector(`.kanban-column[data-status="${item.estado}"] .card-container`);
-      if(col) col.appendChild(createCardElement(item));
-    });
-  }
-
-  function createCardElement(item){
-    const card = document.createElement('div');
-    card.className = 'kanban-card p-4 rounded-xl relief-border';
-    card.dataset.id = item.id;
-
-    const bgColor = benefitColors[item.beneficio] || benefitColors['Otro'];
-    const textColor = getContrastColor(bgColor);
-
-    card.innerHTML = `
-      <div class="font-bold text-lg" style="color:${textColor}">${item.expediente||'S/N'}</div>
-      <div class="text-sm">${item.interno||''}</div>
-      <div class="mt-1 text-xs">Beneficio: ${item.beneficio}</div>
-      <div class="mt-1 text-xs">Estado: ${item.estado}</div>
-      ${item.estado==='Finalizado' && item.motivoFinalizado? `<p class="mt-2 text-xs italic">Motivo: ${item.motivoFinalizado}</p>`:''}
-      ${item.estado==='Finalizado' && item.enlaceResolucion? `<a href="${item.enlaceResolucion}" target="_blank" class="text-xs text-blue-600">Ver Resolución</a>`:''}
+      ${isAuthenticated?`<div class="mt-5 flex justify-end gap-2">
+        <button id="saveLegajoBtn" class="btn btn-primary hidden">Guardar</button>
+      </div>`:''}
     `;
 
-    if(isAuthenticated){
-      card.addEventListener('click', ()=> openEditModal(item));
-    }
-    return card;
+    if (leg.link_computo) $('#openComputoBtnInfo').onclick = ()=> window.open(leg.link_computo, '_blank');
+
+    // Editar (desbloqueo con confirm)
+    $('#editLegajoBtn').onclick = ()=>{
+      if(!isAuthenticated) return alert('Inicia sesión');
+      if(confirm('¿Seguro que quieres modificar este legajo?')){
+        ['#editProntuario','#editNombre','#editDefensor','#editFiscal','#editEstado','#editFin','#editLink'].forEach(sel=>{
+          const el = document.querySelector(sel); if(el) el.disabled=false;
+        });
+        $('#saveLegajoBtn').classList.remove('hidden');
+
+        // Cambio inmediato del estado -> actualiza timeline + fecha clave
+        $('#editEstado').addEventListener('change', async (ev)=>{
+          const newState = ev.target.value;
+          await postData({ action:'updateComputoEstado', id_legajo:leg.id_legajo, newState }, {refreshData:false, refreshModal:false});
+          const key = stateToKey[newState];
+          if (key){
+            let fechas={}; try{ fechas = JSON.parse(leg.fechas_clave_json||'{}'); }catch(e){}
+            fechas[key] = new Date().toISOString();
+            await postData({ action:'updateLegajoField', id_legajo:leg.id_legajo, field:'fechas_clave_json', value: JSON.stringify(fechas) }, {refreshData:true, refreshModal:true});
+          } else {
+            await fetchData();
+            if(isDetailModalOpen) openLegajoDetail(leg.id_legajo);
+          }
+        }, { once:true });
+      }
+    };
+
+    // Guardar con confirm + feedback
+    $('#saveLegajoBtn').onclick = async ()=>{
+      if(!confirm('¿Seguro de guardar los cambios?')) return;
+      const btn = $('#saveLegajoBtn');
+      btn.textContent = 'Guardando datos...'; btn.disabled = true;
+
+      await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nro_prontuario',value:$('#editProntuario').value},{refreshData:false});
+      await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nombre_completo',value:$('#editNombre').value},{refreshData:false});
+      await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'defensor_actual',value:$('#editDefensor').value},{refreshData:false});
+      await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'fiscal_actual',value:$('#editFiscal').value},{refreshData:false});
+      await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'fecha_fin_condena',value:$('#editFin').value},{refreshData:false});
+      await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'link_computo',value:$('#editLink').value},{refreshData:true, refreshModal:true});
+
+      btn.textContent = 'Guardar'; btn.disabled=false;
+      ['#editProntuario','#editNombre','#editDefensor','#editFiscal','#editEstado','#editFin','#editLink'].forEach(sel=>{
+        const el = document.querySelector(sel); if(el) el.disabled=true;
+      });
+      btn.classList.add('hidden');
+      showToast('Datos guardados con éxito');
+    };
   }
 
-  function getContrastColor(hex){
-    if(!hex) return '#000';
-    const r=parseInt(hex.substr(1,2),16), g=parseInt(hex.substr(3,2),16), b=parseInt(hex.substr(5,2),16);
-    return (((r*299)+(g*587)+(b*114))/1000>=128)?'#000':'#fff';
+  function renderSentenciasTab(){
+    const sent = getSentenciasByLegajo(id);
+    $('#tab-content').innerHTML = sent.length
+      ? sent.map(s=>`
+        <div class='p-3 border rounded flex items-center justify-between gap-3'>
+          <div class='min-w-0'>
+            <div class='font-medium truncate'>Causa ${s.nro_causa}</div>
+            <div class='text-sm opacity-80 truncate'>${s.delito} • ${s.pena_impuesta} • ${ (s.fecha_sentencia||'').toString().slice(0,10) }</div>
+          </div>
+          <div class='flex items-center gap-2 flex-shrink-0'>
+            ${s.enlace_sentencia?`<a class='btn btn-secondary' target='_blank' href='${s.enlace_sentencia}'>Ver</a>`:''}
+            ${isAuthenticated?`<button class='btn btn-secondary' onclick="openEditarSentenciaModal('${s.id_sentencia}')">Modificar</button>`:''}
+            ${isAuthenticated?`<button class='btn btn-danger' onclick="deleteSentencia('${s.id_sentencia}')">Eliminar</button>`:''}
+          </div>
+        </div>`).join('')
+      : '<div class="text-sm opacity-70">Sin sentencias.</div>';
   }
 
-  /**********************
-   * EDITAR / ELIMINAR BENEFICIOS
-   **********************/
-  function openEditModal(item){
-    $('#modalTitle').textContent = 'Editar Trámite';
-    $('#caseId').value = item.id;
-    $('#caseLegajo').value = item.id_legajo;
-    $('#expediente').value = item.expediente;
-    $('#interno').value = item.interno;
-    $('#beneficio').value = item.beneficio;
-    $('#fechaIngreso').value = item.fechaIngreso? item.fechaIngreso.split('T')[0] : '';
-
-    if(item.estado==='Finalizado'){
-      $('#finalizeFieldsContainer').classList.remove('hidden');
-      $('#motivoFinalizadoEdit').value = item.motivoFinalizado||'';
-      $('#enlaceResolucionEdit').value = item.enlaceResolucion||'';
-    } else {
-      $('#finalizeFieldsContainer').classList.add('hidden');
-    }
-
-    if(isAuthenticated){
-      $('#deleteCaseBtn').classList.remove('hidden');
-      $('#deleteCaseBtn').onclick = async ()=>{
-        if(confirm("¿Está seguro de eliminar este beneficio?")){
-          await postData({action:'deleteBeneficio', id_beneficio_legajo:item.id}, {refreshData:true});
-          $('#caseModal').classList.remove('show');
-          showToast('Beneficio eliminado');
-        }
-      };
-    }
-
-    $('#caseModal').classList.add('show');
+  function renderComputoTab(){
+    const leg = getLegajoById(id);
+    const linkBtn = leg.link_computo ? `<button id="openComputoBtnComp" class="btn btn-primary mt-3">Abrir Cómputo PDF</button>` : '';
+    $('#tab-content').innerHTML = `
+      <div id="timelineWrap">${renderTimeline(leg)}</div>
+      ${linkBtn}
+    `;
+    if (leg.link_computo) $('#openComputoBtnComp').onclick = ()=> window.open(leg.link_computo, '_blank');
   }
 
-  $('#caseForm').addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const id = fd.get('caseId');
-    const data = Object.fromEntries(fd.entries());
+  function renderTramitesTab(){
+    const ben  = getBeneficiosByLegajo(id);
+    const tram = getTramitesByLegajo(id);
+    const all  = ben.concat(tram);
+    $('#tab-content').innerHTML = (all.length
+      ? all.map(t=>`
+        <div class='p-3 border rounded'>
+          <div class='font-medium'>${t.expediente||t.tipo_tramite||''}</div>
+          <div class='text-sm opacity-80'>${t.beneficio||t.tipo_tramite||''} • Estado: ${t.estado||''}</div>
+        </div>`).join('')
+      : '<div class="text-sm opacity-70">Sin trámites/beneficios.</div>');
+  }
 
-    if(id){
-      await postData({action:'updateBeneficio', ...data, id_beneficio_legajo:id}, {refreshData:true});
-      showToast('Beneficio actualizado');
-    } else {
-      await postData({action:'addBeneficio', ...data, estado:'Ingresado'}, {refreshData:true});
-      showToast('Beneficio creado');
+  // Bind de tabs
+  $$('.tab-btn').forEach(btn=>{
+    btn.onclick = ()=>{
+      $$('.tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      if(tab==='info')      renderInfoTab();
+      if(tab==='sentencias')renderSentenciasTab();
+      if(tab==='computo')   renderComputoTab();
+      if(tab==='tramites')  renderTramitesTab();
+    };
+  });
+  renderInfoTab(); // default
+
+  // Eliminar legajo
+  $('#deleteLegajoBtn').onclick = async ()=>{
+    if(!isAuthenticated) return alert('Inicia sesión');
+    if(confirm('¿Eliminar legajo y TODOS sus registros vinculados? Esta acción no se puede deshacer.')){
+      await postData({action:'deleteLegajoCompleto',id_legajo:id}, {refreshData:true, refreshModal:false});
+      detailModal.classList.remove('show');
+      isDetailModalOpen = false;
+      showToast('Legajo eliminado');
     }
-    $('#caseModal').classList.remove('show');
+  };
+
+  detailModal.classList.add('show');
+}
+
+/**********************
+ * KANBAN BENEFICIOS (Monitor integrado)
+ **********************/
+const KANBAN_COLUMNS = [
+  'Ingresado','En Gabinete','Regreso','Fiscalía','Defensoría','Para Despacho','Finalizado'
+];
+const DEFAULT_BENEFIT_COLORS = {
+  'Salidas Transitorias':'#dbeafe','Prisión Domiciliaria':'#d1fae5','Estímulo Educativo':'#e9d5ff',
+  'Libertad Asistida':'#ccfbf1','Libertad Condicional':'#e0e7ff','Régimen Preparatorio':'#fce7f3','Otro':'#f3f4f6'
+};
+let benefitColors = {...DEFAULT_BENEFIT_COLORS};
+let casesData = [];
+let benefitsChart = null;
+let caseIdToFinalize = null;
+
+function hydrateCasesFromBeneficios(beneficios){
+  casesData = (beneficios||[]).map(b=>({
+    id: b.id_beneficio_legajo,
+    id_legajo: b.id_legajo,
+    expediente: b.expediente,
+    interno: b.interno,
+    beneficio: b.beneficio,
+    estado: b.estado,
+    fechaIngreso: b.fechaIngreso,
+    fechaEnvioGabinete: b.fechaEnvioGabinete,
+    fechaRegresoGabinete: b.fechaRegresoGabinete,
+    fechaEnvioFiscalia: b.fechaEnvioFiscalia,
+    fechaEnvioDefensoria: b.fechaEnvioDefensoria,
+    fechaDespacho: b.fechaDespacho,
+    fechaFinalizado: b.fechaFinalizado,
+    motivoFinalizado: b.motivoFinalizado,
+    enlaceResolucion: b.enlaceResolucion
+  }));
+}
+
+function initializeBoard(){
+  const board = $('#kanban-board');
+  board.innerHTML = '';
+  const topRow = document.createElement('div');
+  topRow.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6';
+  const bottomRow = document.createElement('div');
+  bottomRow.className = 'mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6';
+
+  KANBAN_COLUMNS.forEach((status, index)=>{
+    const col = document.createElement('div');
+    col.className = 'rounded-xl p-4 kanban-column relief-border';
+    col.dataset.status = status;
+    col.innerHTML = `<h2 class="font-bold text-lg mb-4 flex justify-between items-center dark:text-white">
+      ${status}
+      <span id="count-${status.toLowerCase().replace(/ /g,'-')}" class="text-xs bg-gray-200 text-gray-700 rounded-full px-2 py-0.5">0</span>
+    </h2>
+    <div class="space-y-3 card-container" ondragover="event.preventDefault()"></div>`;
+    if (index<4) topRow.appendChild(col); else bottomRow.appendChild(col);
   });
 
-  /**********************
-   * INICIO
-   **********************/
-  applyThemeFromStorage();
+  board.appendChild(topRow);
+  board.appendChild(bottomRow);
+}
+
+function renderBoard(data){
+  initializeBoard();
+  const board = $('#kanban-board');
+  if (!Array.isArray(data)) return;
+  KANBAN_COLUMNS.forEach(status=> updateColumnCounter(status, 0, true));
+
+  data.forEach(item=>{
+    const status = (item.estado||'').trim();
+    const col = board.querySelector(`.kanban-column[data-status="${status}"] .card-container`);
+    if (!col) return;
+    const card = createCardElement(item);
+    col.appendChild(card);
+    updateColumnCounter(status, 1);
+  });
+
+  if (isAuthenticated) setupDragAndDrop();
+}
+
+function createCardElement(caseItem){
+  const card = document.createElement('div');
+  card.className = 'kanban-card p-4 rounded-xl relief-border';
+  card.dataset.id = caseItem.id;
+
+  const bgColor = benefitColors[caseItem.beneficio] || benefitColors['Otro'];
+  const textColor = getContrastColor(bgColor);
+  const displayDate = caseItem.fechaIngreso ? new Date(caseItem.fechaIngreso).toLocaleDateString() : 'N/A';
+
+  const statusDateMap = {
+    'Fiscalía': { field: 'fechaEnvioFiscalia', label: 'Fiscalía' },
+    'Defensoría': { field: 'fechaEnvioDefensoria', label: 'Defensoría' },
+    'En Gabinete': { field: 'fechaEnvioGabinete', label: 'En Gabinete' },
+    'Regreso': { field: 'fechaRegresoGabinete', label: 'Regreso' },
+    'Para Despacho': { field: 'fechaDespacho', label: 'Para Despacho' },
+    'Finalizado': { field: 'fechaFinalizado', label: 'Finalizado' }
+  };
+  let stateDateHTML = '';
+  const statusInfo = statusDateMap[caseItem.estado];
+  if (statusInfo && caseItem[statusInfo.field]) {
+    stateDateHTML = `<div class="mt-1">${statusInfo.label}: ${new Date(caseItem[statusInfo.field]).toLocaleDateString()}</div>`;
+  }
+
+  // Botones de acción: se OMITEN eliminar/archivar (no soportado por backend)
+  let actionButtonsHTML = '';
+
+  // Contenido
+  card.innerHTML = `
+    ${actionButtonsHTML}
+    <div class="font-bold text-lg card-text-main">${caseItem.expediente || 'S/N'}</div>
+    <div class="text-sm mb-2 card-text-secondary">${caseItem.interno || 'S/N'}</div>
+    <div class="benefit-tag text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full" style="background-color:${bgColor}; color:${textColor};">${caseItem.beneficio || 'Otro'}</div>
+    <div class="text-xs mt-2 card-dates card-text-secondary">
+      <div>Ingreso: ${displayDate}</div>
+      ${stateDateHTML}
+    </div>
+    <div class="finalizado-info">
+      ${caseItem.estado==='Finalizado' && caseItem.motivoFinalizado ? `<p class="mt-2 text-xs italic">Motivo: ${caseItem.motivoFinalizado}</p>`:''}
+      ${caseItem.estado==='Finalizado' && caseItem.enlaceResolucion ? `<a href="${caseItem.enlaceResolucion}" target="_blank" class="mt-2 inline-block text-xs text-indigo-600 hover:underline">Ver Resolución</a>`:''}
+    </div>
+  `;
+
+  // Alarmas simples (ej.: +7 días en “En Gabinete”)
+  if (caseItem.estado === 'En Gabinete' && caseItem.fechaEnvioGabinete) {
+    const entryDate = new Date(caseItem.fechaEnvioGabinete);
+    const days = (Date.now()-entryDate.getTime())/(1000*3600*24);
+    if ($('#alarmToggle').checked && days > 7) {
+      card.style.boxShadow = '0 0 0 0 rgba(239,68,68,.7)';
+      card.animate([
+        { boxShadow: '0 0 0 0 rgba(239,68,68,.7)' },
+        { boxShadow: '0 0 18px 6px rgba(239,68,68,0)' },
+        { boxShadow: '0 0 0 0 rgba(239,68,68,0)' }
+      ], { duration: 1500, iterations: Infinity });
+    }
+  }
+
+  if (isAuthenticated) {
+    card.classList.add('draggable');
+    card.draggable = true;
+    card.addEventListener('click', ()=> openEditModal(caseItem));
+  }
+  return card;
+}
+
+function setupDragAndDrop(){
+  const cards = $$('.draggable');
+  const columns = $$('.kanban-column');
+  cards.forEach(c=>{
+    c.addEventListener('dragstart', ()=> c.classList.add('dragging'));
+    c.addEventListener('dragend', ()=> c.classList.remove('dragging'));
+  });
+  columns.forEach(column=>{
+    column.addEventListener('dragover', e=>{ e.preventDefault(); if($('.dragging')) column.classList.add('drag-over'); });
+    column.addEventListener('dragleave', ()=> column.classList.remove('drag-over'));
+    column.addEventListener('drop', async e=>{
+      e.preventDefault();
+      column.classList.remove('drag-over');
+      const draggingCard = $('.dragging');
+      if (!draggingCard) return;
+      const cardId = draggingCard.dataset.id;
+      const newStatus = column.dataset.status;
+      const oldStatus = draggingCard.closest('.kanban-column').dataset.status;
+      if (oldStatus === newStatus) return;
+
+      // Finalizar => abre modal de finalizado
+      if (newStatus === 'Finalizado') {
+        caseIdToFinalize = cardId;
+        $('#finalizeModal').classList.add('show');
+        return;
+      }
+
+      // Movimiento normal
+      column.querySelector('.card-container').appendChild(draggingCard);
+      updateColumnCounter(oldStatus,-1);
+      updateColumnCounter(newStatus,1);
+
+      const item = casesData.find(c=>c.id===cardId);
+      if (item) {
+        item.estado = newStatus;
+        const map = {
+          'Fiscalía':'fechaEnvioFiscalia','Defensoría':'fechaEnvioDefensoria','En Gabinete':'fechaEnvioGabinete',
+          'Regreso':'fechaRegresoGabinete','Para Despacho':'fechaDespacho'
+        };
+        const field = map[newStatus];
+        if (field) {
+          const iso = new Date().toISOString();
+          item[field] = iso;
+          const dateContainer = draggingCard.querySelector('.card-dates');
+          const ingreso = item.fechaIngreso ? new Date(item.fechaIngreso).toLocaleDateString() : 'N/A';
+          const label = {'Fiscalía':'Fiscalía','Defensoría':'Defensoría','En Gabinete':'En Gabinete','Regreso':'Regreso','Para Despacho':'Para Despacho'}[newStatus];
+          dateContainer.innerHTML = `<div>Ingreso: ${ingreso}</div><div class="mt-1">${label}: ${new Date(iso).toLocaleDateString()}</div>`;
+          // Persistir: estado + fechaX
+          await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:cardId, newStatus }, {refreshData:false});
+          await postData({ action:'updateBeneficioField', id_beneficio_legajo:cardId, field, value: iso }, {refreshData:true});
+        } else {
+          await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:cardId, newStatus }, {refreshData:true});
+        }
+      }
+    });
+  });
+}
+
+function updateColumnCounter(status, change, reset=false){
+  const id = `#count-${status.toLowerCase().replace(/ /g,'-')}`;
+  const el = $(id);
+  if (!el) return;
+  if (reset) el.textContent = '0';
+  else el.textContent = String(parseInt(el.textContent,10) + change);
+}
+
+function getContrastColor(hex){ if(!hex) return '#000'; const r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16); return (((r*299)+(g*587)+(b*114))/1000>=128)?'#000':'#fff'; }
+
+function calcStats(data){
+  const active = (data||[]).filter(c=>c.estado!=='Finalizado');
+  $('#total-activos').textContent = active.length;
+  const gabinete = (data||[]).filter(c=>c.fechaEnvioGabinete && c.fechaRegresoGabinete);
+  if (gabinete.length>0){
+    const total = gabinete.reduce((acc,c)=> acc + (Math.abs(new Date(c.fechaRegresoGabinete)-new Date(c.fechaEnvioGabinete))/(1000*60*60*24)), 0);
+    $('#avg-time').textContent = `${(total/gabinete.length).toFixed(1)} días`;
+  } else { $('#avg-time').textContent = 'N/A'; }
+}
+
+function renderChart(data){
+  const el = $('#benefitsChart'); if(!el) return;
+  const ctx = el.getContext('2d');
+  const counts = {};
+  (data||[]).filter(c=>c.estado!=='Finalizado').forEach(b=> counts[b.beneficio]=(counts[b.beneficio]||0)+1 );
+  const labels = Object.keys(counts);
+  const values = Object.values(counts);
+  if (benefitsChart) benefitsChart.destroy();
+  const isDark = $('#body').classList.contains('dark');
+  benefitsChart = new Chart(ctx,{
+    type:'pie',
+    data:{ labels, datasets:[{ data: values, backgroundColor: labels.map(l=> benefitColors[l] || benefitColors['Otro']), borderColor: isDark? 'var(--dark-bg-general)':'var(--light-bg-general)', borderWidth:3 }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{ color: isDark ? '#d1d5db' : '#4b5563' } } } }
+  });
+}
+
+/* Abrir/editar beneficio */
+function openEditModal(caseItem){
+  $('#modalTitle').textContent = 'Editar Trámite';
+  $('#caseId').value = caseItem.id || '';
+  $('#expediente').value = caseItem.expediente || '';
+  $('#interno').value = caseItem.interno || '';
+  $('#beneficio').value = caseItem.beneficio || 'Otro';
+
+  // fecha ingreso
+  if (caseItem.fechaIngreso){
+    const d = new Date(caseItem.fechaIngreso);
+    const off = d.getTimezoneOffset();
+    const adj = new Date(d.getTime()-off*60*1000);
+    $('#fechaIngreso').value = adj.toISOString().split('T')[0];
+  } else $('#fechaIngreso').value = '';
+
+  // fecha según estado actual
+  const map = {
+    'Fiscalía': { field:'fechaEnvioFiscalia', label:'Fecha de Envío a Fiscalía' },
+    'Defensoría': { field:'fechaEnvioDefensoria', label:'Fecha de Envío a Defensoría' },
+    'En Gabinete': { field:'fechaEnvioGabinete', label:'Fecha de Envío a Gabinete' },
+    'Regreso': { field:'fechaRegresoGabinete', label:'Fecha de Regreso de Gabinete' },
+    'Para Despacho': { field:'fechaDespacho', label:'Fecha para Despacho' },
+    'Finalizado': { field:'fechaFinalizado', label:'Fecha de Finalización' }
+  };
+  const info = map[caseItem.estado];
+  if (info){
+    $('#stateDateContainer').classList.remove('hidden');
+    $('#stateDateEditLabel').textContent = info.label;
+    $('#stateDateField').value = info.field;
+    const cur = caseItem[info.field];
+    if (cur){
+      const d = new Date(cur);
+      const off = d.getTimezoneOffset();
+      const adj = new Date(d.getTime()-off*60*1000);
+      $('#stateDateEdit').value = adj.toISOString().split('T')[0];
+    } else $('#stateDateEdit').value = '';
+  } else {
+    $('#stateDateContainer').classList.add('hidden');
+    $('#stateDateEdit').value = ''; $('#stateDateField').value='';
+  }
+
+  if (caseItem.estado==='Finalizado'){
+    $('#finalizeFieldsContainer').classList.remove('hidden');
+    $('#motivoFinalizadoEdit').value = caseItem.motivoFinalizado || '';
+    $('#enlaceResolucionEdit').value = caseItem.enlaceResolucion || '';
+  } else {
+    $('#finalizeFieldsContainer').classList.add('hidden');
+  }
+
+  $('#caseModal').classList.add('show');
+}
+
+/* Guardar alta/edición beneficio */
+$('#cancelBtn').onclick = ()=> $('#caseModal').classList.remove('show');
+$('#caseModal').addEventListener('click', (e)=>{ if(e.target===e.currentTarget) e.currentTarget.classList.remove('show'); });
+
+$('#caseForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const saveBtn = $('#saveCaseBtn');
+  const orig = saveBtn.textContent;
+  saveBtn.textContent = 'Guardando...'; saveBtn.disabled = true; $('#cancelBtn').disabled=true;
+
+  const fd = new FormData(e.target);
+  const id = fd.get('caseId');
+  const expediente = fd.get('expediente').trim();
+  // Validación simple duplicado en cliente
+  if (casesData.some(it=> it.expediente===expediente && it.id!==id)) {
+    showAlert('Error', `El expediente "${expediente}" ya existe.`);
+    saveBtn.textContent = orig; saveBtn.disabled = false; $('#cancelBtn').disabled=false;
+    return;
+  }
+
+  const base = {
+    expediente,
+    interno: fd.get('interno'),
+    beneficio: fd.get('beneficio'),
+    fechaIngreso: fd.get('fechaIngreso')
+  };
+
+  if (id){ // update
+    // campos base
+    await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:'expediente', value:base.expediente }, {refreshData:false});
+    await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:'interno', value:base.interno }, {refreshData:false});
+    await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:'beneficio', value:base.beneficio }, {refreshData:false});
+    await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:'fechaIngreso', value:base.fechaIngreso }, {refreshData:false});
+
+    // fecha de estado si visible
+    if (!$('#stateDateContainer').classList.contains('hidden') && $('#stateDateEdit').value){
+      await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:$('#stateDateField').value, value:$('#stateDateEdit').value }, {refreshData:false});
+    }
+
+    // si finalizado: motivo/enlace
+    if (!$('#finalizeFieldsContainer').classList.contains('hidden')){
+      await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:'motivoFinalizado', value:$('#motivoFinalizadoEdit').value }, {refreshData:false});
+      await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:'enlaceResolucion', value:$('#enlaceResolucionEdit').value }, {refreshData:false});
+    }
+
+    await fetchData();
+  } else { // alta
+    await postData({ action:'addBeneficio', ...base, estado:'Ingresado' }, {refreshData:true});
+  }
+
+  $('#caseModal').classList.remove('show');
+  saveBtn.textContent = orig; saveBtn.disabled=false; $('#cancelBtn').disabled=false;
+});
+
+/* Finalizar arrastre a Finalizado */
+$('#finalizeForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const payload = {
+    id_beneficio_legajo: caseIdToFinalize,
+    motivoFinalizado: $('#motivoFinalizado').value,
+    enlaceResolucion: $('#enlaceResolucion').value
+  };
+  // Set estado + motivo + enlace + fechaFinalizado
+  await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:payload.id_beneficio_legajo, newStatus:'Finalizado' }, {refreshData:false});
+  await postData({ action:'updateBeneficioField', id_beneficio_legajo:payload.id_beneficio_legajo, field:'motivoFinalizado', value:payload.motivoFinalizado }, {refreshData:false});
+  await postData({ action:'updateBeneficioField', id_beneficio_legajo:payload.id_beneficio_legajo, field:'enlaceResolucion', value:payload.enlaceResolucion }, {refreshData:false});
+  await postData({ action:'updateBeneficioField', id_beneficio_legajo:payload.id_beneficio_legajo, field:'fechaFinalizado', value:new Date().toISOString() }, {refreshData:true});
+  $('#finalizeModal').classList.remove('show');
+  $('#finalizeForm').reset();
+});
+$('#cancelFinalizeBtn').onclick = ()=>{
+  $('#finalizeModal').classList.remove('show');
+  $('#finalizeForm').reset();
   fetchData();
-  </script>
+};
+
+/* Buscar en tablero */
+$('#searchInput').addEventListener('input', (e)=>{
+  const q = e.target.value.toLowerCase();
+  const filtered = casesData.filter(c=> (c.expediente||'').toLowerCase().includes(q) || (c.interno||'').toLowerCase().includes(q));
+  renderBoard(filtered);
+  renderChart(filtered);
+  calcStats(filtered);
+});
+
+/* Toggle alarmas */
+$('#alarmToggle').addEventListener('change', ()=> renderBoard(casesData));
+
+/* Botones Beneficios */
+$('#addCaseBtn').addEventListener('click', ()=>{
+  $('#caseForm').reset();
+  $('#modalTitle').textContent = 'Agregar Nuevo Trámite';
+  $('#caseId').value = '';
+  $('#stateDateContainer').classList.add('hidden');
+  $('#finalizeFieldsContainer').classList.add('hidden');
+  $('#caseModal').classList.add('show');
+});
+$('#refreshBenefitsBtn').addEventListener('click', ()=> fetchData());
+
+/* Alert modal */
+function showAlert(title, message){ $('#alertTitle').textContent=title; $('#alertMessage').textContent=message; $('#alertModal').classList.add('show'); }
+$('#closeAlertBtn').onclick = ()=> $('#alertModal').classList.remove('show');
+
+/**********************
+ * INICIO
+ **********************/
+applyThemeFromStorage();
+
+// Cerrar modales al hacer click fuera
+document.querySelectorAll('.modal-backdrop').forEach(m=>{
+  m.addEventListener('click', (e)=>{
+    if(e.target===m){
+      m.classList.remove('show');
+      if(m.id==='legajoDetailModal') isDetailModalOpen = false;
+    }
+  });
+});
+
+// Fecha máx hoy en inputs de fecha de beneficios
+const today = new Date().toISOString().split('T')[0];
+if ($('#fechaIngreso')) $('#fechaIngreso').max = today;
+if ($('#stateDateEdit')) $('#stateDateEdit').max = today;
+
+// Cargar datos iniciales
+fetchData();
+
+</script>
 </body>
 </html>
