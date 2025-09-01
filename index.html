@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Gestión Integral de Legajos - Juzgado de Ejecución Penal</title>
 
-  <!-- Tailwind para prototipado (puedes compilarlo luego para prod) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -100,7 +99,6 @@
 </head>
 
 <body id="body">
-  <!-- Header -->
   <div class="container mx-auto max-w-7xl px-3 pt-4">
     <header class="flex items-center justify-between">
       <div>
@@ -117,9 +115,7 @@
     </header>
   </div>
 
-  <!-- App -->
   <main id="app" class="container mx-auto max-w-7xl px-3 mt-6 space-y-6">
-    <!-- Vista: Legajos -->
     <section id="view-legajos">
       <div class="relief-border p-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -147,9 +143,7 @@
       </div>
     </section>
 
-    <!-- Vista: Beneficios (Monitor integrado) -->
     <section id="view-beneficios" class="hidden">
-      <!-- Controles -->
       <div class="relief-border p-4">
         <div class="flex flex-col md:flex-row justify-between items-center gap-3">
           <div class="flex items-center gap-3">
@@ -166,7 +160,6 @@
         </div>
       </div>
 
-      <!-- Dashboard -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-white p-4 rounded-xl relief-border bg-white-relief">
           <h3 class="text-sm font-medium dark:text-gray-400">Total Activos</h3>
@@ -178,7 +171,6 @@
         </div>
       </div>
 
-      <!-- Loader -->
       <div id="loader" class="text-center py-10 hidden">
         <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -187,10 +179,8 @@
         <p class="mt-2 text-gray-500">Cargando datos...</p>
       </div>
 
-      <!-- Tablero Kanban -->
       <div id="kanban-board" class="relief-border p-4"></div>
 
-      <!-- Gráfico -->
       <div id="chart-container" class="bg-white p-6 rounded-xl mt-6 relief-border bg-white-relief">
         <h3 class="text-lg font-medium mb-4 dark:text-white">Distribución de Beneficios Activos</h3>
         <div class="relative h-80"><canvas id="benefitsChart"></canvas></div>
@@ -198,10 +188,8 @@
     </section>
   </main>
 
-  <!-- Toast -->
   <div id="toast"><div class="toast-card" id="toastText">Listo</div></div>
 
-  <!-- Modal: Login -->
   <div id="loginModal" class="modal-backdrop">
     <div class="modal p-6 w-96">
       <h2 class="text-lg font-bold mb-3">Acceso de Administrador</h2>
@@ -216,22 +204,34 @@
     </div>
   </div>
 
-  <!-- Modal: Configuración -->
   <div id="settingsModal" class="modal-backdrop">
-    <div class="modal p-6 w-[520px]">
-      <div class="flex justify-between items-center mb-3">
+    <div class="modal p-6 w-full max-w-2xl">
+      <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold">Configuración de Interfaz</h2>
         <button id="closeSettings" class="btn btn-secondary">Cerrar</button>
       </div>
-      <div class="grid grid-cols-2 gap-4">
-        <label class="text-sm">Color Primario (encabezado)
-          <input id="colorPrimary" type="color" class="w-full h-10 border rounded mt-1" value="#1e3a8a">
-        </label>
-        <label class="text-sm">Color de Acción (botones)
-          <input id="colorAccent" type="color" class="w-full h-10 border rounded mt-1" value="#2563eb">
-        </label>
+      
+      <div class="space-y-4">
+        <div>
+          <h3 class="font-semibold mb-2">Tema General</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <label class="text-sm">Color Primario (encabezado)
+              <input id="colorPrimary" type="color" class="w-full h-10 border rounded mt-1" value="#1e3a8a">
+            </label>
+            <label class="text-sm">Color de Acción (botones)
+              <input id="colorAccent" type="color" class="w-full h-10 border rounded mt-1" value="#2563eb">
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="font-semibold mb-2">Colores de Beneficios</h3>
+          <div id="benefitColorSettings" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            </div>
+        </div>
       </div>
-      <div class="flex items-center justify-between mt-4">
+
+      <div class="flex items-center justify-between mt-6">
         <div class="flex items-center gap-2">
           <input id="darkToggle" type="checkbox"><label for="darkToggle" class="text-sm">Usar modo oscuro</label>
         </div>
@@ -243,7 +243,6 @@
     </div>
   </div>
 
-  <!-- Modal: Ingresar Sentencia -->
   <div id="ingresarSentenciaModal" class="modal-backdrop">
     <div class="modal p-6 w-[760px] max-w-full overflow-y-auto max-h-[90vh]">
       <h2 class="text-lg font-bold mb-3">Ingresar Nueva Sentencia</h2>
@@ -265,7 +264,6 @@
     </div>
   </div>
 
-  <!-- Modal: Editar Sentencia -->
   <div id="editarSentenciaModal" class="modal-backdrop">
     <div class="modal p-6 w-[760px] max-w-full overflow-y-auto max-h-[90vh]">
       <h2 class="text-lg font-bold mb-3">Editar Sentencia</h2>
@@ -288,7 +286,6 @@
     </div>
   </div>
 
-  <!-- Modal: Detalle de Legajo -->
   <div id="legajoDetailModal" class="modal-backdrop">
     <div class="modal p-6 w-[1040px] max-w-full overflow-y-auto max-h-[95vh]">
       <div class="flex justify-between items-center mb-4">
@@ -311,66 +308,100 @@
     </div>
   </div>
 
-  <!-- Modal Beneficios: Alta/Edición -->
   <div id="caseModal" class="modal-backdrop">
-    <div class="modal p-6 w-full max-w-md">
+    <div class="modal p-6 w-full max-w-xl">
       <h2 id="modalTitle" class="text-xl font-bold mb-4">Agregar Nuevo Trámite</h2>
       <div class="max-h-[70vh] overflow-y-auto pr-2">
         <form id="caseForm" class="space-y-4">
           <input type="hidden" id="caseId" name="caseId">
-          <div>
-            <label class="block text-sm font-medium">N° de Expediente</label>
-            <input type="text" id="expediente" name="expediente" class="mt-1 block w-full px-3 py-2 border rounded-xl" required>
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Nombre del Interno/a</label>
-            <input type="text" id="interno" name="interno" class="mt-1 block w-full px-3 py-2 border rounded-xl" required>
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Fecha de Ingreso</label>
-            <input type="date" id="fechaIngreso" name="fechaIngreso" class="mt-1 block w-full px-3 py-2 border rounded-xl" required>
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Tipo de Beneficio</label>
-            <select id="beneficio" name="beneficio" class="mt-1 block w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-700" required>
-              <option>Salidas Transitorias</option>
-              <option>Prisión Domiciliaria</option>
-              <option>Estímulo Educativo</option>
-              <option>Libertad Asistida</option>
-              <option>Libertad Condicional</option>
-              <option>Régimen Preparatorio</option>
-              <option>Otro</option>
-            </select>
-          </div>
-
-          <!-- Campo dinámico de fecha de estado -->
-          <div id="stateDateContainer" class="hidden border-t pt-4 mt-2">
-            <label id="stateDateEditLabel" for="stateDateEdit" class="block text-sm font-medium">Fecha de Estado</label>
-            <input type="date" id="stateDateEdit" name="stateDateEdit" class="mt-1 block w-full px-3 py-2 border rounded-xl">
-            <input type="hidden" id="stateDateField" name="stateDateField">
-          </div>
-
-          <!-- Campos de Finalización (solo si estado = Finalizado) -->
-          <div id="finalizeFieldsContainer" class="hidden border-t pt-4 mt-2">
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium">Motivo de Finalización</label>
-              <textarea id="motivoFinalizadoEdit" rows="3" class="mt-1 block w-full px-3 py-2 border rounded-xl"></textarea>
+              <label class="block text-sm font-medium">Legajo Asociado <span class="text-red-500">*</span></label>
+              <select id="id_legajo" name="id_legajo" class="mt-1 block w-full px-3 py-2 border rounded-xl" required>
+                </select>
             </div>
             <div>
-              <label class="block text-sm font-medium">Enlace a Resolución</label>
-              <input type="url" id="enlaceResolucionEdit" placeholder="https://..." class="mt-1 block w-full px-3 py-2 border rounded-xl">
+              <label class="block text-sm font-medium">Tipo de Beneficio <span class="text-red-500">*</span></label>
+              <select id="beneficio" name="beneficio" class="mt-1 block w-full px-3 py-2 border rounded-xl bg-white dark:bg-gray-700" required>
+                <option>Salidas Transitorias</option>
+                <option>Prisión Domiciliaria</option>
+                <option>Estímulo Educativo</option>
+                <option>Libertad Asistida</option>
+                <option>Libertad Condicional</option>
+                <option>Régimen Preparatorio</option>
+                <option>Otro</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium">N° de Expediente</label>
+              <input type="text" id="expediente" name="expediente" class="mt-1 block w-full px-3 py-2 border rounded-xl">
+            </div>
+            <div>
+              <label class="block text-sm font-medium">Nombre del Interno/a (auto-completado)</label>
+              <input type="text" id="interno" name="interno" class="mt-1 block w-full px-3 py-2 border rounded-xl" readonly>
+            </div>
+          </div>
+          
+          <div class="border-t pt-4 mt-4">
+            <h3 class="text-md font-semibold mb-2">Fechas Clave del Trámite</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                  <label class="block text-sm font-medium">Fecha de Ingreso</label>
+                  <input type="date" id="fechaIngreso" name="fechaIngreso" class="mt-1 block w-full px-3 py-2 border rounded-xl" required>
+              </div>
+              <div>
+                  <label class="block text-sm font-medium">Envío a Gabinete</label>
+                  <input type="date" id="fechaEnvioGabinete" name="fechaEnvioGabinete" class="mt-1 block w-full px-3 py-2 border rounded-xl">
+              </div>
+              <div>
+                  <label class="block text-sm font-medium">Regreso de Gabinete</label>
+                  <input type="date" id="fechaRegresoGabinete" name="fechaRegresoGabinete" class="mt-1 block w-full px-3 py-2 border rounded-xl">
+              </div>
+              <div>
+                  <label class="block text-sm font-medium">Envío a Fiscalía</label>
+                  <input type="date" id="fechaEnvioFiscalia" name="fechaEnvioFiscalia" class="mt-1 block w-full px-3 py-2 border rounded-xl">
+              </div>
+              <div>
+                  <label class="block text-sm font-medium">Envío a Defensoría</label>
+                  <input type="date" id="fechaEnvioDefensoria" name="fechaEnvioDefensoria" class="mt-1 block w-full px-3 py-2 border rounded-xl">
+              </div>
+              <div>
+                  <label class="block text-sm font-medium">Para Despacho</label>
+                  <input type="date" id="fechaDespacho" name="fechaDespacho" class="mt-1 block w-full px-3 py-2 border rounded-xl">
+              </div>
+            </div>
+          </div>
+          
+          <div id="finalizeFieldsContainer" class="border-t pt-4 mt-4">
+            <h3 class="text-md font-semibold mb-2">Datos de Finalización</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium">Fecha de Finalización</label>
+                    <input type="date" id="fechaFinalizado" name="fechaFinalizado" class="mt-1 block w-full px-3 py-2 border rounded-xl">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium">Motivo de Finalización</label>
+                    <textarea id="motivoFinalizadoEdit" name="motivoFinalizado" rows="2" class="mt-1 block w-full px-3 py-2 border rounded-xl"></textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium">Enlace a Resolución</label>
+                    <input type="url" id="enlaceResolucionEdit" name="enlaceResolucion" placeholder="https://..." class="mt-1 block w-full px-3 py-2 border rounded-xl">
+                </div>
             </div>
           </div>
         </form>
       </div>
-      <div class="flex justify-end gap-2 pt-4">
-        <button type="button" id="cancelBtn" class="btn btn-secondary">Cancelar</button>
-        <button type="submit" form="caseForm" id="saveCaseBtn" class="btn btn-primary w-36 flex justify-center items-center">Guardar</button>
+      <div class="flex justify-between items-center pt-4">
+        <button type="button" id="deleteCaseBtn" class="btn btn-danger hidden">Eliminar</button>
+        <div class="flex justify-end gap-2">
+          <button type="button" id="cancelBtn" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" form="caseForm" id="saveCaseBtn" class="btn btn-primary w-36 flex justify-center items-center">Guardar</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal Beneficios: Finalizar -->
   <div id="finalizeModal" class="modal-backdrop">
     <div class="modal p-6 w-full max-w-md">
       <h2 class="text-xl font-bold mb-4">Finalizar Trámite</h2>
@@ -392,7 +423,6 @@
     </div>
   </div>
 
-  <!-- Modal genérico de alerta -->
   <div id="alertModal" class="modal-backdrop">
     <div class="modal p-6 w-full max-w-md">
       <h2 id="alertTitle" class="text-xl font-bold mb-3 text-yellow-500">Alerta</h2>
@@ -412,7 +442,7 @@
  * CONFIG
  **********************/
 const googleWebAppUrl = "https://script.google.com/macros/s/AKfycbyeY6uqUypUlY_JZnWxA09ygNdf9wd54LrHPWXSLuhK00nF370qrS1N3t9oZ2Fk5bJU/exec";
-const PASSWORD = "454545";
+const PASSWORD = "454545"; // ¡ADVERTENCIA DE SEGURIDAD! Esto no es seguro para producción.
 
 let allData = { legajos: [], sentencias: [], beneficios: [], tramitesVarios: [] };
 let isAuthenticated = false;
@@ -433,6 +463,7 @@ function applyThemeFromStorage(){
   if(p) document.documentElement.style.setProperty('--color-primary', p);
   if(a) document.documentElement.style.setProperty('--color-accent', a);
   if(d) $('#body').classList.add('dark');
+  loadBenefitColors(); // Cargar colores de beneficios
 }
 function showToast(msg, ms=2000){
   const t = $('#toast'), tx = $('#toastText');
@@ -450,17 +481,22 @@ $('#settingsBtn').onclick = ()=>{
   $('#colorPrimary').value = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#1e3a8a';
   $('#colorAccent').value  = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() || '#2563eb';
   $('#darkToggle').checked = $('#body').classList.contains('dark');
+  renderBenefitColorSettings(); // Renderizar pickers de colores
 };
 $('#closeSettings').onclick = ()=> $('#settingsModal').classList.remove('show');
 $('#resetTheme').onclick = ()=>{
   localStorage.removeItem('theme_primary');
   localStorage.removeItem('theme_accent');
   localStorage.removeItem('theme_dark');
+  localStorage.removeItem('benefit_colors'); // Resetear colores de beneficios
   document.documentElement.style.setProperty('--color-primary','#1e3a8a');
   document.documentElement.style.setProperty('--color-accent','#2563eb');
   $('#body').classList.remove('dark');
+  loadBenefitColors(); // Recargar colores por defecto
+  renderBoard(casesData); // Refrescar tablero
 };
 $('#saveTheme').onclick = ()=>{
+  // Guardar tema general
   const p = $('#colorPrimary').value;
   const a = $('#colorAccent').value;
   const d = $('#darkToggle').checked;
@@ -470,8 +506,18 @@ $('#saveTheme').onclick = ()=>{
   localStorage.setItem('theme_accent', a);
   localStorage.setItem('theme_dark', d?'1':'0');
   d? $('#body').classList.add('dark') : $('#body').classList.remove('dark');
+  
+  // Guardar colores de beneficios
+  const customColors = {};
+  $$('#benefitColorSettings input[type="color"]').forEach(input => {
+      customColors[input.dataset.benefit] = input.value;
+  });
+  localStorage.setItem('benefit_colors', JSON.stringify(customColors));
+  loadBenefitColors();
+
   $('#settingsModal').classList.remove('show');
   showToast('Preferencias guardadas');
+  renderBoard(casesData); // Refrescar tablero con nuevos colores
 };
 
 /**********************
@@ -484,7 +530,6 @@ $('#nav-legajos').onclick = ()=>{
 $('#nav-beneficios').onclick = ()=>{
   $('#view-legajos').classList.add('hidden');
   $('#view-beneficios').classList.remove('hidden');
-  // refrescar tablero al entrar
   renderBoard(casesData);
   renderChart(casesData);
   calcStats(casesData);
@@ -528,7 +573,6 @@ async function fetchData(){
   allData = await res.json();
   renderLegajosTable(allData.legajos || []);
   hydrateCasesFromBeneficios(allData.beneficios || []);
-  // si estamos viendo beneficios, refrescar tablero
   if (!$('#view-beneficios').classList.contains('hidden')) {
     renderBoard(casesData);
     renderChart(casesData);
@@ -558,14 +602,12 @@ function renderLegajosTable(legajos){
     const tr=document.createElement("tr");
     tr.className="border-b hover:bg-gray-50 dark:hover:bg-[#0f172a] cursor-pointer";
     const fin = (l.fecha_fin_condena||'').toString().slice(0,10);
-    tr.innerHTML = `
-      <td class='px-4 py-3'>${l.id_legajo}</td>
+    tr.innerHTML = `<td class='px-4 py-3'>${l.id_legajo}</td>
       <td class='px-4 py-3'>${l.nro_prontuario||''}</td>
       <td class='px-4 py-3'>${l.nombre_completo||''}</td>
       <td class='px-4 py-3'>${l.defensor_actual||''}</td>
       <td class='px-4 py-3'>${l.estado_computo||''}</td>
-      <td class='px-4 py-3'>${fin}</td>
-    `;
+      <td class='px-4 py-3'>${fin}</td>`;
     tr.onclick = ()=> openLegajoDetail(l.id_legajo);
     tbody.appendChild(tr);
   });
@@ -618,6 +660,7 @@ $('#editarSentenciaForm').onsubmit = async (e)=>{
   const fd = new FormData(e.target);
   const obj = Object.fromEntries(fd.entries());
   obj.es_unificada = fd.has('es_unificada');
+  // NOTA: Esto podría optimizarse en una sola llamada al backend
   await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'nro_causa', value:obj.nro_causa},{refreshData:false});
   await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'delito', value:obj.delito},{refreshData:false});
   await postData({action:'updateSentenciaField', id_sentencia:obj.id_sentencia, field:'pena_impuesta', value:obj.pena_impuesta},{refreshData:false});
@@ -683,8 +726,8 @@ function openLegajoDetail(id){
     const currentIdx = stateOrder.indexOf(currentState);
     let fechas={}; try{ fechas = JSON.parse(legRef.fechas_clave_json||'{}'); }catch(e){}
     return `<div class="timeline">
-      ${steps.map((s,i)=>`
-        <div class="tl-step">
+      ${steps.map((s,i)=>
+        `<div class="tl-step">
           <div class="tl-dot
             ${currentIdx>-1 && i<currentIdx ? 'completed' : ''}
             ${currentIdx===i ? 'current' : ''}"></div>
@@ -725,12 +768,9 @@ function openLegajoDetail(id){
 
       ${isAuthenticated?`<div class="mt-5 flex justify-end gap-2">
         <button id="saveLegajoBtn" class="btn btn-primary hidden">Guardar</button>
-      </div>`:''}
-    `;
-
+      </div>`:''}`;
     if (leg.link_computo) $('#openComputoBtnInfo').onclick = ()=> window.open(leg.link_computo, '_blank');
 
-    // Editar (desbloqueo con confirm)
     $('#editLegajoBtn').onclick = ()=>{
       if(!isAuthenticated) return alert('Inicia sesión');
       if(confirm('¿Seguro que quieres modificar este legajo?')){
@@ -738,8 +778,6 @@ function openLegajoDetail(id){
           const el = document.querySelector(sel); if(el) el.disabled=false;
         });
         $('#saveLegajoBtn').classList.remove('hidden');
-
-        // Cambio inmediato del estado -> actualiza timeline + fecha clave
         $('#editEstado').addEventListener('change', async (ev)=>{
           const newState = ev.target.value;
           await postData({ action:'updateComputoEstado', id_legajo:leg.id_legajo, newState }, {refreshData:false, refreshModal:false});
@@ -756,12 +794,12 @@ function openLegajoDetail(id){
       }
     };
 
-    // Guardar con confirm + feedback
     $('#saveLegajoBtn').onclick = async ()=>{
       if(!confirm('¿Seguro de guardar los cambios?')) return;
       const btn = $('#saveLegajoBtn');
       btn.textContent = 'Guardando datos...'; btn.disabled = true;
 
+      // NOTA: Esto podría optimizarse en una sola llamada al backend
       await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nro_prontuario',value:$('#editProntuario').value},{refreshData:false});
       await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'nombre_completo',value:$('#editNombre').value},{refreshData:false});
       await postData({action:'updateLegajoField',id_legajo:leg.id_legajo,field:'defensor_actual',value:$('#editDefensor').value},{refreshData:false});
@@ -781,8 +819,8 @@ function openLegajoDetail(id){
   function renderSentenciasTab(){
     const sent = getSentenciasByLegajo(id);
     $('#tab-content').innerHTML = sent.length
-      ? sent.map(s=>`
-        <div class='p-3 border rounded flex items-center justify-between gap-3'>
+      ? sent.map(s=>
+        `<div class='p-3 border rounded flex items-center justify-between gap-3'>
           <div class='min-w-0'>
             <div class='font-medium truncate'>Causa ${s.nro_causa}</div>
             <div class='text-sm opacity-80 truncate'>${s.delito} • ${s.pena_impuesta} • ${ (s.fecha_sentencia||'').toString().slice(0,10) }</div>
@@ -811,8 +849,8 @@ function openLegajoDetail(id){
     const tram = getTramitesByLegajo(id);
     const all  = ben.concat(tram);
     $('#tab-content').innerHTML = (all.length
-      ? all.map(t=>`
-        <div class='p-3 border rounded'>
+      ? all.map(t=>
+        `<div class='p-3 border rounded'>
           <div class='font-medium'>${t.expediente||t.tipo_tramite||''}</div>
           <div class='text-sm opacity-80'>${t.beneficio||t.tipo_tramite||''} • Estado: ${t.estado||''}</div>
         </div>`).join('')
@@ -833,7 +871,6 @@ function openLegajoDetail(id){
   });
   renderInfoTab(); // default
 
-  // Eliminar legajo
   $('#deleteLegajoBtn').onclick = async ()=>{
     if(!isAuthenticated) return alert('Inicia sesión');
     if(confirm('¿Eliminar legajo y TODOS sus registros vinculados? Esta acción no se puede deshacer.')){
@@ -861,6 +898,31 @@ let benefitColors = {...DEFAULT_BENEFIT_COLORS};
 let casesData = [];
 let benefitsChart = null;
 let caseIdToFinalize = null;
+
+function loadBenefitColors() {
+    const savedColors = localStorage.getItem('benefit_colors');
+    benefitColors = {...DEFAULT_BENEFIT_COLORS}; // Reset to default first
+    if (savedColors) {
+        try {
+            const customColors = JSON.parse(savedColors);
+            Object.assign(benefitColors, customColors); // Merge saved colors
+        } catch (e) {
+            console.error("Error parsing benefit colors from localStorage", e);
+        }
+    }
+}
+function renderBenefitColorSettings() {
+    const container = $('#benefitColorSettings');
+    container.innerHTML = '';
+    Object.keys(DEFAULT_BENEFIT_COLORS).forEach(benefit => {
+        const currentColor = benefitColors[benefit] || DEFAULT_BENEFIT_COLORS[benefit];
+        const wrapper = document.createElement('label');
+        wrapper.className = 'text-sm';
+        wrapper.innerHTML = `${benefit}
+            <input type="color" data-benefit="${benefit}" value="${currentColor}" class="w-full h-10 border rounded mt-1">`;
+        container.appendChild(wrapper);
+    });
+}
 
 function hydrateCasesFromBeneficios(beneficios){
   casesData = (beneficios||[]).map(b=>({
@@ -926,46 +988,27 @@ function renderBoard(data){
 
 function createCardElement(caseItem){
   const card = document.createElement('div');
-  card.className = 'kanban-card p-4 rounded-xl relief-border';
+  card.className = 'kanban-card p-4 rounded-xl relief-border cursor-pointer';
   card.dataset.id = caseItem.id;
 
   const bgColor = benefitColors[caseItem.beneficio] || benefitColors['Otro'];
   const textColor = getContrastColor(bgColor);
   const displayDate = caseItem.fechaIngreso ? new Date(caseItem.fechaIngreso).toLocaleDateString() : 'N/A';
+  const legajoInfo = caseItem.id_legajo ? `<div class="text-xs mt-1 font-semibold">Legajo: #${caseItem.id_legajo}</div>` : '';
 
-  const statusDateMap = {
-    'Fiscalía': { field: 'fechaEnvioFiscalia', label: 'Fiscalía' },
-    'Defensoría': { field: 'fechaEnvioDefensoria', label: 'Defensoría' },
-    'En Gabinete': { field: 'fechaEnvioGabinete', label: 'En Gabinete' },
-    'Regreso': { field: 'fechaRegresoGabinete', label: 'Regreso' },
-    'Para Despacho': { field: 'fechaDespacho', label: 'Para Despacho' },
-    'Finalizado': { field: 'fechaFinalizado', label: 'Finalizado' }
-  };
-  let stateDateHTML = '';
-  const statusInfo = statusDateMap[caseItem.estado];
-  if (statusInfo && caseItem[statusInfo.field]) {
-    stateDateHTML = `<div class="mt-1">${statusInfo.label}: ${new Date(caseItem[statusInfo.field]).toLocaleDateString()}</div>`;
-  }
-
-  // Botones de acción: se OMITEN eliminar/archivar (no soportado por backend)
-  let actionButtonsHTML = '';
-
-  // Contenido
   card.innerHTML = `
-    ${actionButtonsHTML}
     <div class="font-bold text-lg card-text-main">${caseItem.expediente || 'S/N'}</div>
     <div class="text-sm mb-2 card-text-secondary">${caseItem.interno || 'S/N'}</div>
     <div class="benefit-tag text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full" style="background-color:${bgColor}; color:${textColor};">${caseItem.beneficio || 'Otro'}</div>
+    ${legajoInfo}
     <div class="text-xs mt-2 card-dates card-text-secondary">
       <div>Ingreso: ${displayDate}</div>
-      ${stateDateHTML}
     </div>
     <div class="finalizado-info">
       ${caseItem.estado==='Finalizado' && caseItem.motivoFinalizado ? `<p class="mt-2 text-xs italic">Motivo: ${caseItem.motivoFinalizado}</p>`:''}
       ${caseItem.estado==='Finalizado' && caseItem.enlaceResolucion ? `<a href="${caseItem.enlaceResolucion}" target="_blank" class="mt-2 inline-block text-xs text-indigo-600 hover:underline">Ver Resolución</a>`:''}
     </div>
   `;
-
   // Alarmas simples (ej.: +7 días en “En Gabinete”)
   if (caseItem.estado === 'En Gabinete' && caseItem.fechaEnvioGabinete) {
     const entryDate = new Date(caseItem.fechaEnvioGabinete);
@@ -1007,20 +1050,15 @@ function setupDragAndDrop(){
       const newStatus = column.dataset.status;
       const oldStatus = draggingCard.closest('.kanban-column').dataset.status;
       if (oldStatus === newStatus) return;
-
-      // Finalizar => abre modal de finalizado
       if (newStatus === 'Finalizado') {
         caseIdToFinalize = cardId;
         $('#finalizeModal').classList.add('show');
         return;
       }
-
-      // Movimiento normal
       column.querySelector('.card-container').appendChild(draggingCard);
       updateColumnCounter(oldStatus,-1);
       updateColumnCounter(newStatus,1);
-
-      const item = casesData.find(c=>c.id===cardId);
+      const item = casesData.find(c=>c.id==cardId);
       if (item) {
         item.estado = newStatus;
         const map = {
@@ -1031,11 +1069,6 @@ function setupDragAndDrop(){
         if (field) {
           const iso = new Date().toISOString();
           item[field] = iso;
-          const dateContainer = draggingCard.querySelector('.card-dates');
-          const ingreso = item.fechaIngreso ? new Date(item.fechaIngreso).toLocaleDateString() : 'N/A';
-          const label = {'Fiscalía':'Fiscalía','Defensoría':'Defensoría','En Gabinete':'En Gabinete','Regreso':'Regreso','Para Despacho':'Para Despacho'}[newStatus];
-          dateContainer.innerHTML = `<div>Ingreso: ${ingreso}</div><div class="mt-1">${label}: ${new Date(iso).toLocaleDateString()}</div>`;
-          // Persistir: estado + fechaX
           await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:cardId, newStatus }, {refreshData:false});
           await postData({ action:'updateBeneficioField', id_beneficio_legajo:cardId, field, value: iso }, {refreshData:true});
         } else {
@@ -1082,55 +1115,53 @@ function renderChart(data){
   });
 }
 
+function populateLegajosDropdown(selectedId = null) {
+    const select = $('#id_legajo');
+    select.innerHTML = '<option value="">-- Seleccione un legajo --</option>';
+    (allData.legajos || []).sort((a, b) => (a.nombre_completo || '').localeCompare(b.nombre_completo)).forEach(legajo => {
+        const option = document.createElement('option');
+        option.value = legajo.id_legajo;
+        option.textContent = `${legajo.nombre_completo} - Pront. ${legajo.nro_prontuario || 'S/N'}`;
+        if (selectedId && legajo.id_legajo == selectedId) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+}
+
+// Helper para convertir y formatear fechas para inputs
+const toInputDate = (isoString) => {
+    if (!isoString) return '';
+    try {
+        const d = new Date(isoString);
+        const off = d.getTimezoneOffset();
+        const adj = new Date(d.getTime() - off * 60 * 1000);
+        return adj.toISOString().split('T')[0];
+    } catch (e) { return ''; }
+};
+
 /* Abrir/editar beneficio */
 function openEditModal(caseItem){
   $('#modalTitle').textContent = 'Editar Trámite';
+  $('#deleteCaseBtn').classList.remove('hidden');
+  populateLegajosDropdown(caseItem.id_legajo);
+  
+  $('#id_legajo').value = caseItem.id_legajo || '';
+  $('#interno').value = caseItem.interno || ''; // Nombre se carga al seleccionar legajo
+
+  // Poblar todos los campos del formulario
   $('#caseId').value = caseItem.id || '';
   $('#expediente').value = caseItem.expediente || '';
-  $('#interno').value = caseItem.interno || '';
   $('#beneficio').value = caseItem.beneficio || 'Otro';
-
-  // fecha ingreso
-  if (caseItem.fechaIngreso){
-    const d = new Date(caseItem.fechaIngreso);
-    const off = d.getTimezoneOffset();
-    const adj = new Date(d.getTime()-off*60*1000);
-    $('#fechaIngreso').value = adj.toISOString().split('T')[0];
-  } else $('#fechaIngreso').value = '';
-
-  // fecha según estado actual
-  const map = {
-    'Fiscalía': { field:'fechaEnvioFiscalia', label:'Fecha de Envío a Fiscalía' },
-    'Defensoría': { field:'fechaEnvioDefensoria', label:'Fecha de Envío a Defensoría' },
-    'En Gabinete': { field:'fechaEnvioGabinete', label:'Fecha de Envío a Gabinete' },
-    'Regreso': { field:'fechaRegresoGabinete', label:'Fecha de Regreso de Gabinete' },
-    'Para Despacho': { field:'fechaDespacho', label:'Fecha para Despacho' },
-    'Finalizado': { field:'fechaFinalizado', label:'Fecha de Finalización' }
-  };
-  const info = map[caseItem.estado];
-  if (info){
-    $('#stateDateContainer').classList.remove('hidden');
-    $('#stateDateEditLabel').textContent = info.label;
-    $('#stateDateField').value = info.field;
-    const cur = caseItem[info.field];
-    if (cur){
-      const d = new Date(cur);
-      const off = d.getTimezoneOffset();
-      const adj = new Date(d.getTime()-off*60*1000);
-      $('#stateDateEdit').value = adj.toISOString().split('T')[0];
-    } else $('#stateDateEdit').value = '';
-  } else {
-    $('#stateDateContainer').classList.add('hidden');
-    $('#stateDateEdit').value = ''; $('#stateDateField').value='';
-  }
-
-  if (caseItem.estado==='Finalizado'){
-    $('#finalizeFieldsContainer').classList.remove('hidden');
-    $('#motivoFinalizadoEdit').value = caseItem.motivoFinalizado || '';
-    $('#enlaceResolucionEdit').value = caseItem.enlaceResolucion || '';
-  } else {
-    $('#finalizeFieldsContainer').classList.add('hidden');
-  }
+  $('#fechaIngreso').value = toInputDate(caseItem.fechaIngreso);
+  $('#fechaEnvioGabinete').value = toInputDate(caseItem.fechaEnvioGabinete);
+  $('#fechaRegresoGabinete').value = toInputDate(caseItem.fechaRegresoGabinete);
+  $('#fechaEnvioFiscalia').value = toInputDate(caseItem.fechaEnvioFiscalia);
+  $('#fechaEnvioDefensoria').value = toInputDate(caseItem.fechaEnvioDefensoria);
+  $('#fechaDespacho').value = toInputDate(caseItem.fechaDespacho);
+  $('#fechaFinalizado').value = toInputDate(caseItem.fechaFinalizado);
+  $('#motivoFinalizadoEdit').value = caseItem.motivoFinalizado || '';
+  $('#enlaceResolucionEdit').value = caseItem.enlaceResolucion || '';
 
   $('#caseModal').classList.add('show');
 }
@@ -1147,47 +1178,43 @@ $('#caseForm').addEventListener('submit', async (e)=>{
 
   const fd = new FormData(e.target);
   const id = fd.get('caseId');
-  const expediente = fd.get('expediente').trim();
-  // Validación simple duplicado en cliente
-  if (casesData.some(it=> it.expediente===expediente && it.id!==id)) {
-    showAlert('Error', `El expediente "${expediente}" ya existe.`);
-    saveBtn.textContent = orig; saveBtn.disabled = false; $('#cancelBtn').disabled=false;
-    return;
-  }
+  const payload = Object.fromEntries(fd.entries());
 
-  const base = {
-    expediente,
-    interno: fd.get('interno'),
-    beneficio: fd.get('beneficio'),
-    fechaIngreso: fd.get('fechaIngreso')
-  };
-
-  if (id){ // update
-    // campos base
-    await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:'expediente', value:base.expediente }, {refreshData:false});
-    await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:'interno', value:base.interno }, {refreshData:false});
-    await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:'beneficio', value:base.beneficio }, {refreshData:false});
-    await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:'fechaIngreso', value:base.fechaIngreso }, {refreshData:false});
-
-    // fecha de estado si visible
-    if (!$('#stateDateContainer').classList.contains('hidden') && $('#stateDateEdit').value){
-      await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:$('#stateDateField').value, value:$('#stateDateEdit').value }, {refreshData:false});
+  if (id){ // UPDATE
+    // NOTA: Idealmente, esto se haría en una sola llamada al backend
+    for (const [key, value] of Object.entries(payload)) {
+        if (key !== 'caseId') {
+            await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:key, value }, {refreshData:false});
+        }
     }
-
-    // si finalizado: motivo/enlace
-    if (!$('#finalizeFieldsContainer').classList.contains('hidden')){
-      await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:'motivoFinalizado', value:$('#motivoFinalizadoEdit').value }, {refreshData:false});
-      await postData({ action:'updateBeneficioField', id_beneficio_legajo:id, field:'enlaceResolucion', value:$('#enlaceResolucionEdit').value }, {refreshData:false});
-    }
-
-    await fetchData();
-  } else { // alta
-    await postData({ action:'addBeneficio', ...base, estado:'Ingresado' }, {refreshData:true});
+    await fetchData(); // Recargar datos al final de todas las actualizaciones
+  } else { // ALTA
+    payload.estado = 'Ingresado';
+    await postData({ action:'addBeneficio', ...payload }, {refreshData:true});
   }
 
   $('#caseModal').classList.remove('show');
   saveBtn.textContent = orig; saveBtn.disabled=false; $('#cancelBtn').disabled=false;
 });
+
+// Autocompletar nombre del interno al seleccionar legajo
+$('#id_legajo').addEventListener('change', (e) => {
+    const legajoId = e.target.value;
+    const legajo = getLegajoById(legajoId);
+    $('#interno').value = legajo.nombre_completo || '';
+});
+
+// Eliminar beneficio
+$('#deleteCaseBtn').addEventListener('click', async () => {
+    const id = $('#caseId').value;
+    if (!id) return;
+    if (confirm('¿Está seguro de que desea eliminar este beneficio? Esta acción no se puede deshacer.')) {
+        await postData({ action: 'deleteBeneficio', id_beneficio_legajo: id }, { refreshData: true });
+        $('#caseModal').classList.remove('show');
+        showToast('Beneficio eliminado correctamente.');
+    }
+});
+
 
 /* Finalizar arrastre a Finalizado */
 $('#finalizeForm').addEventListener('submit', async (e)=>{
@@ -1197,7 +1224,6 @@ $('#finalizeForm').addEventListener('submit', async (e)=>{
     motivoFinalizado: $('#motivoFinalizado').value,
     enlaceResolucion: $('#enlaceResolucion').value
   };
-  // Set estado + motivo + enlace + fechaFinalizado
   await postData({ action:'updateBeneficioStatus', id_beneficio_legajo:payload.id_beneficio_legajo, newStatus:'Finalizado' }, {refreshData:false});
   await postData({ action:'updateBeneficioField', id_beneficio_legajo:payload.id_beneficio_legajo, field:'motivoFinalizado', value:payload.motivoFinalizado }, {refreshData:false});
   await postData({ action:'updateBeneficioField', id_beneficio_legajo:payload.id_beneficio_legajo, field:'enlaceResolucion', value:payload.enlaceResolucion }, {refreshData:false});
@@ -1228,8 +1254,8 @@ $('#addCaseBtn').addEventListener('click', ()=>{
   $('#caseForm').reset();
   $('#modalTitle').textContent = 'Agregar Nuevo Trámite';
   $('#caseId').value = '';
-  $('#stateDateContainer').classList.add('hidden');
-  $('#finalizeFieldsContainer').classList.add('hidden');
+  $('#deleteCaseBtn').classList.add('hidden'); // Ocultar botón de eliminar en modo alta
+  populateLegajosDropdown();
   $('#caseModal').classList.add('show');
 });
 $('#refreshBenefitsBtn').addEventListener('click', ()=> fetchData());
@@ -1243,7 +1269,6 @@ $('#closeAlertBtn').onclick = ()=> $('#alertModal').classList.remove('show');
  **********************/
 applyThemeFromStorage();
 
-// Cerrar modales al hacer click fuera
 document.querySelectorAll('.modal-backdrop').forEach(m=>{
   m.addEventListener('click', (e)=>{
     if(e.target===m){
@@ -1253,12 +1278,9 @@ document.querySelectorAll('.modal-backdrop').forEach(m=>{
   });
 });
 
-// Fecha máx hoy en inputs de fecha de beneficios
 const today = new Date().toISOString().split('T')[0];
-if ($('#fechaIngreso')) $('#fechaIngreso').max = today;
-if ($('#stateDateEdit')) $('#stateDateEdit').max = today;
+document.querySelectorAll('input[type="date"]').forEach(input => input.max = today);
 
-// Cargar datos iniciales
 fetchData();
 
 </script>
